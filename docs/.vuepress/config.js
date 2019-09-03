@@ -2,9 +2,9 @@ module.exports = {
   title: '给大佬端茶',
   description: '给大佬端茶',
   head: [
-    ['link', { rel: 'icon', href: '/image/给大佬端茶.png' }],
+    ['link', { rel: 'icon', href: 'image/给大佬端茶.png' }],
   ],
-  base: '/',
+  base: '/blog/',
   markdown: {
     lineNumbers: true
   },
@@ -14,6 +14,7 @@ module.exports = {
     collapsable: true,
     displayAllHeaders: true,
     activeHeaderLinks: false,
+    repo: 'https://github.com/yq1930/blog',
     nav: [
       { text: '首页', link: '/' },
       { text: '语雀', link: 'https://www.yuque.com/dashboard/books' },
