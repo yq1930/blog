@@ -3,7 +3,7 @@ home: true
 lang: zh-CN
 heroImage: image/给大佬端茶.png
 actionText: 快速进入 →
-actionLink: /web/html
+actionLink: /web/vue/axios
 features:
 - title: GitHub
   details: 全球最大的'同性交友网站'

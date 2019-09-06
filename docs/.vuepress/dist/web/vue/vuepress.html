@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>VuePress从使用，到部署GitHub Pages，到自定义域名设置 | 给大佬端茶</title>
+    <meta name="description" content="给大佬端茶">
+    <link rel="icon" href="image/给大佬端茶.png">
+    
+    <link rel="preload" href="/assets/css/0.styles.81305d55.css" as="style"><link rel="preload" href="/assets/js/app.4e05c474.js" as="script"><link rel="preload" href="/assets/js/2.f54617e5.js" as="script"><link rel="preload" href="/assets/js/12.d62bbfa5.js" as="script"><link rel="prefetch" href="/assets/js/10.408d45c3.js"><link rel="prefetch" href="/assets/js/11.0c5cbe63.js"><link rel="prefetch" href="/assets/js/13.7956703c.js"><link rel="prefetch" href="/assets/js/3.d42137a9.js"><link rel="prefetch" href="/assets/js/4.6b96c4f2.js"><link rel="prefetch" href="/assets/js/5.2549adf2.js"><link rel="prefetch" href="/assets/js/6.717826c2.js"><link rel="prefetch" href="/assets/js/7.acd96d5b.js"><link rel="prefetch" href="/assets/js/8.b2d3b53c.js"><link rel="prefetch" href="/assets/js/9.fe71e710.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.81305d55.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">给大佬端茶</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/" class="nav-link">首页</a></div><div class="nav-item"><a href="https://www.yuque.com/yq1930/omowl7" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  语雀
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/yq1930" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  GitHub
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><div class="dropdown-wrapper"><a class="dropdown-title"><span class="title">English</span> <span class="arrow right"></span></a> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  单词
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></li></ul></div></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/" class="nav-link">首页</a></div><div class="nav-item"><a href="https://www.yuque.com/yq1930/omowl7" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  语雀
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/yq1930" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  GitHub
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><div class="dropdown-wrapper"><a class="dropdown-title"><span class="title">English</span> <span class="arrow right"></span></a> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  单词
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></li></ul></div></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>前端知识库</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><section class="sidebar-group collapsable is-sub-group depth-1"><p class="sidebar-heading open"><span>Vue</span> <span class="arrow down"></span></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/web/vue/axios.html" class="sidebar-link">Axios</a></li><li><a href="/web/vue/vuepress.html" class="active sidebar-link">VuePress</a></li></ul></section></li><li><section class="sidebar-group collapsable is-sub-group depth-1"><p class="sidebar-heading"><span>CSS</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable is-sub-group depth-1"><p class="sidebar-heading"><span>其他方面</span> <span class="arrow right"></span></p> <!----></section></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="vuepress从使用，到部署github-pages，到自定义域名设置"><a href="#vuepress从使用，到部署github-pages，到自定义域名设置" aria-hidden="true" class="header-anchor">#</a> VuePress从使用，到部署GitHub Pages，到自定义域名设置</h1> <p>一、项目结构</p> <p><img src="https://cdn.nlark.com/yuque/0/2019/png/242278/1567494861315-570edd2b-af09-4015-8080-9b230b9e8500.png" alt="project"></p> <p>二、搭建</p> <ol><li>全局安装VuePress</li></ol> <p><code>npm install -g vuepress</code></p> <ol start="2"><li>新建文件夹</li></ol> <p>比如：blog-vuepress</p> <ol start="3"><li>项目初始化</li></ol> <div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token comment">// 命令行:  yarn init -y</span>
+<span class="token comment">// 文件: package.json</span>
+
+<span class="token punctuation">{</span>
+  <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;blog-vuepress&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;1.0.0&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;main&quot;</span><span class="token operator">:</span> <span class="token string">&quot;index.js&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;license&quot;</span><span class="token operator">:</span> <span class="token string">&quot;MIT&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;scripts&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;docs:dev&quot;</span><span class="token operator">:</span> <span class="token string">&quot;vuepress dev docs&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;docs:build&quot;</span><span class="token operator">:</span> <span class="token string">&quot;vuepress build docs&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;deploy&quot;</span><span class="token operator">:</span> <span class="token string">&quot;bash deploy.sh&quot;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br></div></div><ol start="4"><li>在blog-vuepress根目录下新建docs</li></ol> <div class="language-js line-numbers-mode"><pre class="language-js"><code><span class="token comment">// 1.命令行:  yarn docs:build</span>
+
+<span class="token comment">// 生成 docs/.vuepress 文件夹,在此文件夹下新建config.js</span>
+
+<span class="token comment">// config.js</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  title<span class="token punctuation">:</span> <span class="token string">'给大佬端茶'</span><span class="token punctuation">,</span>
+  description<span class="token punctuation">:</span> <span class="token string">'给大佬端茶'</span><span class="token punctuation">,</span>
+  head<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token string">'link'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> rel<span class="token punctuation">:</span> <span class="token string">'icon'</span><span class="token punctuation">,</span> href<span class="token punctuation">:</span> <span class="token string">'image/给大佬端茶.png'</span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  base<span class="token punctuation">:</span> <span class="token string">'/blog/'</span><span class="token punctuation">,</span>
+  markdown<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    lineNumbers<span class="token punctuation">:</span> <span class="token boolean">true</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  themeConfig<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    sidebarDepth<span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+    lastUpdated<span class="token punctuation">:</span> <span class="token string">'Last Updated'</span><span class="token punctuation">,</span>
+    collapsable<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    displayAllHeaders<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    activeHeaderLinks<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    repo<span class="token punctuation">:</span> <span class="token string">'https://github.com/yq1930/blog'</span><span class="token punctuation">,</span>
+    nav<span class="token punctuation">:</span> <span class="token punctuation">[</span>  <span class="token comment">//导航栏                                             </span>
+      <span class="token punctuation">{</span> text<span class="token punctuation">:</span> <span class="token string">'首页'</span><span class="token punctuation">,</span> link<span class="token punctuation">:</span> <span class="token string">'/'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span> text<span class="token punctuation">:</span> <span class="token string">'语雀'</span><span class="token punctuation">,</span> link<span class="token punctuation">:</span> <span class="token string">'https://www.yuque.com/dashboard/books'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span> text<span class="token punctuation">:</span> <span class="token string">'GitHub'</span><span class="token punctuation">,</span> link<span class="token punctuation">:</span> <span class="token string">'https://github.com/yq1930'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span>
+        text<span class="token punctuation">:</span> <span class="token string">'English'</span><span class="token punctuation">,</span> items<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">{</span> text<span class="token punctuation">:</span> <span class="token string">'单词'</span><span class="token punctuation">,</span> link<span class="token punctuation">:</span> <span class="token string">'https://translate.google.com'</span> <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    sidebar<span class="token punctuation">:</span> <span class="token punctuation">[</span>  <span class="token comment">//侧边栏</span>
+      <span class="token punctuation">{</span>
+        title<span class="token punctuation">:</span> <span class="token string">'前端'</span><span class="token punctuation">,</span>
+        collapsable<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        children<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">[</span><span class="token string">'/web/html'</span><span class="token punctuation">,</span> <span class="token string">'超文本标记'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+          <span class="token punctuation">[</span><span class="token string">'/web/css'</span><span class="token punctuation">,</span> <span class="token string">'层叠样式表'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+          <span class="token punctuation">[</span><span class="token string">'/web/js'</span><span class="token punctuation">,</span> <span class="token string">'解释型编程语言'</span><span class="token punctuation">]</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 2.在docs根文件夹下新建README.md</span>
+
+<span class="token comment">// README.md</span>
+
+<span class="token operator">--</span><span class="token operator">-</span>
+home<span class="token punctuation">:</span> <span class="token boolean">true</span>
+lang<span class="token punctuation">:</span> zh<span class="token operator">-</span><span class="token constant">CN</span>
+heroImage<span class="token punctuation">:</span> image<span class="token operator">/</span>给大佬端茶<span class="token punctuation">.</span>png
+actionText<span class="token punctuation">:</span> 快速进入 →
+actionLink<span class="token punctuation">:</span> <span class="token operator">/</span>web<span class="token operator">/</span>html
+features<span class="token punctuation">:</span>
+<span class="token operator">-</span> title<span class="token punctuation">:</span> GitHub
+  details<span class="token punctuation">:</span> 全球最大的<span class="token string">'同性交友网站'</span>
+<span class="token operator">-</span> title<span class="token punctuation">:</span> 语雀
+  details<span class="token punctuation">:</span> 专业的云端知识库
+<span class="token operator">-</span> title<span class="token punctuation">:</span> Vue
+  details<span class="token punctuation">:</span> Vue是一套用于构建用户界面的渐进式框架。与其它大型框架不同的是，Vue 被设计为可以自底向上逐层应用。
+footer<span class="token punctuation">:</span> <span class="token constant">MIT</span> Licensed <span class="token operator">|</span> Copyright © <span class="token number">2019</span><span class="token operator">-</span>present qun ye
+<span class="token operator">--</span><span class="token operator">-</span>
+
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br><span class="line-number">59</span><br><span class="line-number">60</span><br><span class="line-number">61</span><br><span class="line-number">62</span><br><span class="line-number">63</span><br><span class="line-number">64</span><br><span class="line-number">65</span><br><span class="line-number">66</span><br></div></div><ol start="5"><li>运行 yarn docs:dev查看本地效果</li></ol> <p>三、部署到GitHub Pages</p> <p>这里按照https://***.github.io/***方式部署</p> <ol><li>在github新建一个名为blog的仓库</li> <li>按照github给出的步骤，讲blog-vuepress项目push上去</li> <li>在blog-vuepress根目录下新建 deploy.sh 脚本</li></ol> <div class="language-sh line-numbers-mode"><pre class="language-sh"><code>
+<span class="token comment">#!/usr/bin/env sh</span>
+
+<span class="token comment"># 确保脚本抛出遇到的错误</span>
+<span class="token builtin class-name">set</span> -e
+
+<span class="token comment"># 生成静态文件</span>
+<span class="token function">yarn</span> run docs:build
+
+<span class="token comment"># 进入生成的文件夹</span>
+<span class="token builtin class-name">cd</span> docs/.vuepress/dist
+
+<span class="token comment"># 如果是发布到自定义域名</span>
+<span class="token comment"># echo 'www.yequn.fun' &gt; CNAME</span>
+
+<span class="token function">git</span> init
+<span class="token function">git</span> <span class="token function">add</span> -A
+<span class="token function">git</span> commit -m <span class="token string">'deploy'</span>
+
+<span class="token comment"># 如果发布到 https://&lt;USERNAME&gt;.github.io</span>
+<span class="token comment"># git push -f git@github.com:yq1930/blog.github.io.git master</span>
+
+<span class="token comment"># 如果发布到 https://&lt;USERNAME&gt;.github.io/&lt;REPO&gt; （注意：我们用的是这个方式！！！）</span>
+<span class="token function">git</span> push -f git@github.com:yq1930/blog.git master:gh-pages
+
+<span class="token builtin class-name">cd</span> -
+
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br></div></div><ol start="4"><li>在终端上进入blog-vuepress项目中</li></ol> <p><code>命令行: yarn deploy</code></p> <p><img src="https://cdn.nlark.com/yuque/0/2019/png/242278/1567496870204-b1ba90e0-02bc-4926-9483-c01dc127a59b.png?x-oss-process=image/resize,w_746" alt="deploy"></p> <ol start="5"><li>在github中仓库blog设置</li></ol> <p><img src="https://cdn.nlark.com/yuque/0/2019/png/242278/1567496941180-6b64b00f-0d2b-46db-aea2-8e71b7f57e0f.png?x-oss-process=image/resize,w_746" alt="github1"></p> <p><img src="https://cdn.nlark.com/yuque/0/2019/png/242278/1567496982334-aa49de30-dcce-4dd8-941b-f0ebe2a8efb9.png?x-oss-process=image/resize,w_746" alt="github2"></p> <p>在github pages的source下选择我们在脚本中push上来的分支，然后点击 <code>https://yq1930.github.io/blog/</code> 看看是否部署成功</p> <p><strong>这里有个坑</strong>：</p> <p>github中的公钥是以前windows上，在mac上并没有更换，导致在 输入命令行: <code>yarn deploy</code> 时并没有产生 <code>gh-pages breanch 分支</code>，
+导致找不到这个分支，<strong>解决的办法是</strong>:进入到mac上本地 .ssh 中 id_rsa.pub中的公钥添加到github上即可</p> <p>这样在github pages分支上找到这个gh-pages breanch分支</p> <p>四、自定义域名</p> <ol><li>需要:一个域名（阿里云等）</li> <li>解析域名，看下图</li></ol> <p><img src="https://cdn.nlark.com/yuque/0/2019/png/242278/1567565645943-69598caf-a885-40a3-804a-9bf91ee6aa46.png?x-oss-process=image/resize,w_746" alt="aliyun"></p> <p>比如：我的域名 <code>yequn.fun</code>（阿里云购买的域名）</p> <ol start="3"><li></li></ol> <div class="language-sh line-numbers-mode"><pre class="language-sh"><code>
+<span class="token variable"><span class="token variable">`</span>文件 deploy.sh<span class="token variable">`</span></span>
+
+<span class="token comment">#!/usr/bin/env sh</span>
+
+<span class="token comment"># 确保脚本抛出遇到的错误</span>
+<span class="token builtin class-name">set</span> -e
+
+<span class="token comment"># 生成静态文件</span>
+<span class="token function">yarn</span> run docs:build
+
+<span class="token comment"># 进入生成的文件夹</span>
+<span class="token builtin class-name">cd</span> docs/.vuepress/dist
+
+<span class="token comment"># 如果是发布到自定义域名</span>
+<span class="token builtin class-name">echo</span> <span class="token string">'www.yequn.fun'</span> <span class="token operator">&gt;</span> CNAME
+
+<span class="token function">git</span> init
+<span class="token function">git</span> <span class="token function">add</span> -A
+<span class="token function">git</span> commit -m <span class="token string">'deploy'</span>
+
+<span class="token comment"># 如果发布到 https://&lt;USERNAME&gt;.github.io</span>
+<span class="token comment"># git push -f git@github.com:yq1930/blog.github.io.git master</span>
+
+<span class="token comment"># 如果发布到 https://&lt;USERNAME&gt;.github.io/&lt;REPO&gt;</span>
+<span class="token function">git</span> push -f git@github.com:yq1930/blog.git master:gh-pages
+
+<span class="token builtin class-name">cd</span> -
+
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br></div></div><ol start="4"><li>config.js中 <code>base：'/'</code>,这里发现写法变成 <code>base:'/blog/'</code>，跳转404页面</li></ol> <p><img src="https://cdn.nlark.com/yuque/0/2019/png/242278/1567565731813-f0933e78-4bc3-4b77-83f3-b4c7508ae912.png" alt="404"></p> <p>5.命令行: <code>yarn deploy</code> 输入网址:www.yequn.fun即可</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+        ←
+        <a href="/web/vue/axios.html" class="prev">
+          Axios
+        </a></span> <span class="next"><a href="/web/css/bem.html">
+          BEM规范
+        </a>
+        →
+      </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.4e05c474.js" defer></script><script src="/assets/js/2.f54617e5.js" defer></script><script src="/assets/js/12.d62bbfa5.js" defer></script>
+  </body>
+</html>
