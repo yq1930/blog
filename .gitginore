@@ -6,3 +6,4 @@ node_modules/
 sources/.vuepress/dist/
 *.bat
 *.sh
+.eslintrc.js
