@@ -2,7 +2,7 @@ module.exports = {
   title: '锦书致南终',
   description: 'The lazier you are, the more likely you will miss the people and things you like.',
   head: [
-    ['link', { rel: 'icon', href: 'image/给大佬端茶.png' }],
+    ['link', { rel: 'icon', href: 'icon/avatar.jpg' }],
   ],
   base: '/',
   markdown: {
