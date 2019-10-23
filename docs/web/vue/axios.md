@@ -16,9 +16,9 @@ if (process.env.NODE_ENV == 'development') {
   axios.defaults.baseURL = '/api'
 } else if (process.env.NODE_ENV == 'production') {
   // 发布接口
-  axios.defaults.baseURL = 'https://www.ahhkt.cn/corporateWebsites'
+  axios.defaults.baseURL = 'https://xxxx/xxx' // 接口地址
   // 测试接口
-  // axios.defaults.baseURL = 'http://172.81.206.14:8080/corporateWebsites'
+  // axios.defaults.baseURL = 'https://xxxx/xxx' 测试接口地址
 }
 axios.defaults.headers = {
   'Content-Type': 'application/json',
