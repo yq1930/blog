@@ -1,8 +1,8 @@
-# React-Native
+### React-Native
 
 一、遇到的问题
 
-### 运行后，无法打开iOS模拟器(mac)
+#### 运行后，无法打开iOS模拟器(mac)
 
 1. 安装 `sudo gem install cocoapods`
 

@@ -1,6 +1,6 @@
-# Gulp4.0之初步用法
+### Gulp4.0之初步用法
 
-### 根目录下 gulpfile.js
+#### 根目录下 gulpfile.js
 
 ```javascript
 // 根目录下 gulpfile.js
@@ -60,6 +60,6 @@ gulp.task('default',
 
 ```
 
-### 页面结构
+#### 页面结构
 
 ![page](https://cdn.nlark.com/yuque/0/2019/png/242278/1566458512057-29ed447f-1094-42a0-8b52-44162afc1982.png)

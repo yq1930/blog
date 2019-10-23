@@ -1,4 +1,4 @@
-# VuePress从使用，到部署GitHub Pages，到自定义域名设置
+### VuePress从使用，到部署GitHub Pages，到自定义域名设置
 
 一、项目结构
 

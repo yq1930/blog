@@ -15,6 +15,7 @@
     "eslint-plugin-vue": "^5.2.3"
   },
   "dependencies": {
-    "eslint-plugin-html": "^6.0.0"
+    "eslint-plugin-html": "^6.0.0",
+    "moment": "^2.24.0"
   }
 }
