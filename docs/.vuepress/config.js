@@ -1,60 +1,58 @@
 module.exports = {
-  title: '锦书致南终',
-  description: 'The lazier you are, the more likely you will miss the people and things you like.',
-  head: [
-    ['link', { rel: 'icon', href: 'icon/avatar.jpg' }],
-  ],
-  base: '/',
+  title: "锦书致南终",
+  description:
+    "The lazier you are, the more likely you will miss the people and things you like.",
+  head: [["link", { rel: "icon", href: "icon/avatar.jpg" }]],
+  base: "/",
   markdown: {
     lineNumbers: true
   },
   themeConfig: {
     sidebarDepth: 2,
-    lastUpdated: 'Last Updated',
+    lastUpdated: "Last Updated",
     collapsable: true,
     displayAllHeaders: true,
     activeHeaderLinks: false,
     nav: [
-      { text: '首页', link: '/' },
-      { text: '语雀', link: 'https://www.yuque.com/yq1930/omowl7' },
-      { text: 'GitHub', link: 'https://github.com/yq1930' },
+      { text: "首页", link: "/" },
+      { text: "语雀", link: "https://www.yuque.com/yq1930/omowl7" },
+      { text: "GitHub", link: "https://github.com/yq1930" },
       {
-        text: 'English', items: [
-          { text: '单词', link: 'https://translate.google.com' }
-        ]
-      },
+        text: "English",
+        items: [{ text: "单词", link: "https://translate.google.com" }]
+      }
     ],
     sidebar: [
       {
-        title: '前端知识库',
+        title: "前端知识库",
         collapsable: false,
         children: [
           {
-            title: 'Vue',
+            title: "Vue",
             children: [
-              ['/web/vue/axios', 'Axios'],
-              ['/web/vue/vuepress', 'VuePress'],
+              ["/web/vue/axios", "Axios"],
+              ["/web/vue/vuepress", "VuePress"]
             ]
           },
           {
-            title: 'CSS',
+            title: "CSS",
+            children: [["/web/css/bem", "BEM规范"]]
+          },
+          {
+            title: "其他方面",
             children: [
-              ['/web/css/bem', 'BEM规范'],
+              ["/web/other/newTechnology", "最新技术"],
+              ["/web/other/reactNative", "ReactNavtive"],
+              ["/web/other/gulp", "Gulp4.0"],
+              ["/web/other/restful", "Restful接口"]
             ]
           },
           {
-            title: '其他方面',
-            children: [
-              ['/web/other/newTechnology', '最新技术'],
-              ['/web/other/reactNative', 'ReactNavtive'],
-              ['/web/other/gulp', 'Gulp4.0'],
-              ['/web/other/restful', 'Restful接口'],
-            ]
+            title: "JavaScript",
+            children: [["/web/JavaScript/ES6", "ES6"]]
           }
         ]
       }
     ]
   }
 };
-
-

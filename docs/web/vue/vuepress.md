@@ -175,7 +175,7 @@ github中的公钥是以前windows上，在mac上并没有更换，导致在 输
 
 比如：我的域名 `yequn.fun`（阿里云购买的域名）
 
-3.
+3. 
 ```sh
 
 `文件 deploy.sh`
@@ -212,4 +212,6 @@ cd -
 
 ![404](https://cdn.nlark.com/yuque/0/2019/png/242278/1567565731813-f0933e78-4bc3-4b77-83f3-b4c7508ae912.png)
 
-5.命令行: `yarn deploy` 输入网址:www.yequn.fun即可
+5. 命令行: `yarn deploy` 输入网址:www.yequn.fun即可
+
+PS: 在本地运行项目时，命令行: `vuepress dev docs`
