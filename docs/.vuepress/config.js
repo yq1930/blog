@@ -16,7 +16,7 @@ module.exports = {
           // 不要忘了安装 moment
           const moment = require("moment");
           moment.locale(lang);
-          return moment(timestamp).format('YYYY-MM-DD HH:mm');
+          return moment(timestamp).format("YYYY-MM-DD HH:mm");
         }
       }
     ]
@@ -58,7 +58,10 @@ module.exports = {
           {
             title: "JavaScript",
             collapsable: false,
-            children: [["/web/JavaScript/ES6", "ES6"]]
+            children: [
+              ["/web/JavaScript/ES6", "ES6"],
+              ["/web/JavaScript/prototype", "原型继承"]
+            ]
           },
           {
             title: "其他",
