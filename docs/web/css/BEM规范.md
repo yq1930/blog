@@ -1,10 +1,8 @@
-### BEM规范
-
-1. 什么是BEM?
+#  什么是BEM
 
 BEM其实是块（block）、元素（element）、修饰符（modifier）的缩写
 
-2. 命名约定的模式如下：
+# 命名约定模式
 
 .block{}
 

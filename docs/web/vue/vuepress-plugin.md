@@ -1,6 +1,4 @@
-### vuepress 插件用法
-
-#### 一、@vuepress/plugin-last-updated 插件
+## plugin-last-updated插件
 
 - [VuePress 文档 @vuepress/plugin-last-updated 插件介绍](https://vuepress.vuejs.org/zh/plugin/official/plugin-last-updated.html#%E4%BD%BF%E7%94%A8)
 
@@ -32,4 +30,4 @@
     }
   };
   ```
-  ### 未完待续...
+  #### 未完待续...
