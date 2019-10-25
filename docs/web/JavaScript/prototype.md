@@ -1,4 +1,4 @@
-### 原型继承
+## 原型继承用法
 
 ```javascript
 function Student(props) {

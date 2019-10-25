@@ -1,4 +1,4 @@
-### 一、var 、let 和 const
+## var 、let 和 const
 
 - var
 
@@ -18,7 +18,7 @@
   - 4. let const 作用范围是块级作用域，var 则是函数作用域
   - 5. let const 相同的变量名不能重复声明
 
-### 二、原型继承 和 Class 继承
+## 原型继承 和 Class 继承
 
 #### 组合继承
 
@@ -98,7 +98,7 @@ child.getValue();
 console.log(child instanceof Parent);
 ```
 
-### 三、模块化
+## 模块化
 
 #### 1. AMD 和 CMD
 
@@ -150,7 +150,7 @@ export function a() {}
 export default a(){}
 ```
 
-### 四、Proxy
+## Proxy
 
 - 作用：用来自定义对象。在 Vue3.0 中将通过 Proxy 替换 Object.defineProperty
 - 原因：Proxy 无需一层层递归为每个属性添加代理，一次即可完成，并且性能上更好，缺点：兼容性不好
@@ -186,7 +186,7 @@ p.a = 2;
 p.a;
 ```
 
-### 五、map、filter、reduce
+## map、filter、reduce
 
 #### map
 

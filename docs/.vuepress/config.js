@@ -22,7 +22,7 @@ module.exports = {
     ]
   ],
   themeConfig: {
-    sidebarDepth: 2,
+    sidebarDepth: 3,
     lastUpdated: "上次更新",
     collapsable: true,
     displayAllHeaders: true,
@@ -47,20 +47,21 @@ module.exports = {
             children: [
               ["/web/vue/axios", "Axios"],
               ["/web/vue/vuepress", "VuePress"],
-              ["/web/vue/vuepress-plugin", "VuePress插件用法"]
+              ["/web/vue/vuepress-plugin", "VuePress插件"]
             ]
           },
           {
             title: "CSS",
             collapsable: false,
-            children: [["/web/css/bem", "BEM规范"]]
+            children: [["/web/css/BEM规范", "BEM规范"]]
           },
           {
             title: "JavaScript",
             collapsable: false,
             children: [
               ["/web/JavaScript/ES6", "ES6"],
-              ["/web/JavaScript/prototype", "原型继承"]
+              ["/web/JavaScript/prototype", "原型继承"],
+              ["/web/JavaScript/browser", "浏览器"]
             ]
           },
           {
