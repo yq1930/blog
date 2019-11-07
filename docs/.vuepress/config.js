@@ -2,7 +2,7 @@ module.exports = {
   title: "锦书致南终",
   description:
     "The lazier you are, the more likely you will miss the people and things you like.",
-  head: [["link", { rel: "icon", href: "icon/avatar.jpg" }]],
+  head: [["link", { rel: "icon", href: "icon/avatar.png" }]],
   base: "/",
   markdown: {
     lineNumbers: true
@@ -33,7 +33,7 @@ module.exports = {
       { text: "GitHub", link: "https://github.com/yq1930" },
       {
         text: "English",
-        items: [{ text: "Google翻译", link: "https://translate.google.com" }]
+        items: [{ text: "单词", link: "https://translate.google.com" }]
       }
     ],
     sidebar: [
