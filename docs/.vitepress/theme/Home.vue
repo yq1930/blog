@@ -1,14 +1,15 @@
 <template>
   <div class="field-home">
     <header class="field-nav">
-      <a class="field-brand" href="/" aria-label="返回野塘漫首页">
+      <a class="field-brand" href="/" aria-label="返回野塘漫水首页">
         <img src="/icon/avatar.png" alt="" width="36" height="36" />
-        <span>野塘漫</span>
+        <span>野塘漫水</span>
       </a>
       <nav aria-label="主导航">
         <a href="#library">文章索引</a>
         <a href="/web/JavaScript/ES6">前端</a>
         <a href="/backend/overview">后端</a>
+        <a href="/ai/llm-basics">AI</a>
       </nav>
     </header>
 
@@ -16,7 +17,7 @@
       <section class="field-hero" aria-labelledby="home-title">
         <div class="field-hero__copy">
           <p class="field-kicker">YETANG TECH NOTES <span>持续整理中</span></p>
-          <h1 id="home-title">从浏览器到服务端，<br />让经验在野塘漫开。</h1>
+          <h1 id="home-title">从浏览器到服务端，<br />把现场经验整理成可复用的手记。</h1>
           <p class="field-lede">这里不是按技术名词堆砌的收藏夹，而是围绕开发现场整理的工作手记：先理解系统如何运作，再找到眼下问题可以落地的解法。</p>
           <div class="field-actions">
             <a class="field-button field-button--primary" href="/web/JavaScript/ES6">从前端基础开始 <span aria-hidden="true">→</span></a>
@@ -87,6 +88,13 @@
             <p>从工程化地图、提交边界到测试、发布与可观测性，把“能运行”推进到“可长期维护”。</p>
             <span class="shelf-card__link">阅读工程化笔记 <i aria-hidden="true">→</i></span>
           </a>
+          <a class="shelf-card shelf-card--ai" href="/ai/llm-basics">
+            <span class="shelf-card__mark">AI</span>
+            <span class="shelf-card__meta">4 篇 · 模型与应用</span>
+            <h3>AI 与 Agent</h3>
+            <p>从大语言模型的生成本质出发，理解 Prompt、工具调用与检索增强，把模型能力落到可工程化的应用里。</p>
+            <span class="shelf-card__link">阅读 AI 笔记 <i aria-hidden="true">→</i></span>
+          </a>
         </div>
       </section>
 
@@ -117,7 +125,7 @@
     </main>
 
     <footer class="field-footer">
-      <span>野塘漫 · 技术手记</span>
+      <span>野塘漫水 · 技术手记</span>
       <span>从问题出发，为复用而记录。</span>
     </footer>
   </div>

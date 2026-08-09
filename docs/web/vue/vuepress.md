@@ -50,7 +50,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: '野塘漫',
+  title: '野塘漫水',
   description: '前端开发手记',
   cleanUrls: true,
   themeConfig: {

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: '野塘漫',
+  title: '野塘漫水',
   description: '从浏览器到服务端，把真实开发经验整理成可复用的技术手记。',
   cleanUrls: true,
   appearance: false,
@@ -13,7 +13,7 @@ export default defineConfig({
   ],
   themeConfig: {
     logo: '/icon/avatar.png',
-    siteTitle: '野塘漫',
+    siteTitle: '野塘漫水',
     outline: {
       level: [2, 3],
       label: '本页索引'
@@ -29,7 +29,8 @@ export default defineConfig({
       { text: '笔记首页', link: '/' },
       { text: '前端', link: '/web/JavaScript/ES6' },
       { text: '后端', link: '/backend/overview' },
-      { text: '工程化', link: '/engineering/toolchain' }
+      { text: '工程化', link: '/engineering/toolchain' },
+      { text: 'AI', link: '/ai/llm-basics' }
     ],
     sidebar: {
       '/web/JavaScript/': [
@@ -104,6 +105,17 @@ export default defineConfig({
             { text: '持续集成与发布', link: '/engineering/ci-delivery' },
             { text: '日志、指标与可观测性', link: '/engineering/observability' },
             { text: 'Gulp 4：维护旧项目', link: '/engineering/gulp' }
+          ]
+        }
+      ],
+      '/ai/': [
+        {
+          text: 'AI 与 Agent',
+          items: [
+            { text: 'LLM 应用基础', link: '/ai/llm-basics' },
+            { text: 'Prompt 工程实践', link: '/ai/prompt-engineering' },
+            { text: 'Agent 架构与工具调用', link: '/ai/agent-architecture' },
+            { text: 'RAG 检索增强生成', link: '/ai/rag' }
           ]
         }
       ]

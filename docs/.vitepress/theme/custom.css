@@ -93,12 +93,14 @@ body { background: var(--field-paper); }
 .shelf-card--vue { background: #f9eee1; }
 .shelf-card--server { background: #e7eef2; }
 .shelf-card--data { color: #e9f3f0; border-color: var(--field-deep); background: var(--field-deep); }
+.shelf-card--ai { background: #efeaf6; }
 .shelf-card::after { position: absolute; right: -28px; bottom: -38px; width: 160px; height: 160px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.13; content: ""; }
 .shelf-card__mark, .shelf-card__meta, .shelf-card__link { position: relative; z-index: 1; }
 .shelf-card__mark { color: var(--field-tide); font-family: var(--vp-font-family-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.12em; }
 .shelf-card--vue .shelf-card__mark { color: var(--field-coral); }
 .shelf-card--server .shelf-card__mark { color: #2d6380; }
 .shelf-card--data .shelf-card__mark { color: #8fe0d8; }
+.shelf-card--ai .shelf-card__mark { color: #6d4ea8; }
 .shelf-card__meta { margin-top: 26px; color: #688088; font-size: 12px; }
 .shelf-card--data .shelf-card__meta { color: #aac9c4; }
 .shelf-card h3 { position: relative; z-index: 1; margin: 7px 0 0; font-family: "Songti SC", STSong, serif; font-size: 25px; }
@@ -108,6 +110,7 @@ body { background: var(--field-paper); }
 .shelf-card--vue .shelf-card__link { color: #b34a34; }
 .shelf-card--server .shelf-card__link { color: #2d6380; }
 .shelf-card--data .shelf-card__link { color: #8fe0d8; }
+.shelf-card--ai .shelf-card__link { color: #6d4ea8; }
 .shelf-card__link i { margin-left: 6px; font-size: 17px; font-style: normal; }
 .field-recent { display: grid; grid-template-columns: 0.78fr 1.22fr; gap: 56px; width: 100%; padding: 88px max(24px, calc((100% - 1180px) / 2)); color: #e7f4ef; background: var(--field-deep); }
 .recent-intro h2 { color: inherit; }
