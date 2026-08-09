@@ -1,217 +1,86 @@
-## 使用+部署GitHub+自定义域名
+---
+title: 从 VuePress 到 VitePress
+description: 用迁移清单完成文档站升级，并以可重复的构建流程发布到 GitHub Pages。
+---
 
-一、项目结构
+# 从 VuePress 到 VitePress
 
-![project](https://cdn.nlark.com/yuque/0/2019/png/242278/1567494861315-570edd2b-af09-4015-8080-9b230b9e8500.png)
+VuePress 与 VitePress 都用 Markdown 构建文档站，但它们的配置、主题 API 和构建底层不同。迁移时先保护内容和链接，再逐步替换配置，不要把“升级依赖”和“重做站点”混成一次不可验证的大改动。
 
-二、搭建
+## 迁移前先盘点三类内容
 
-1. 全局安装 VuePress
+| 内容 | 迁移重点 |
+| --- | --- |
+| Markdown | 标题层级、Frontmatter、内部链接、代码块 |
+| 配置 | 导航、侧边栏、站点标题、部署路径 |
+| 扩展 | VuePress 插件、主题覆盖、自定义组件 |
 
-`npm install -g vuepress`
+先列出原来的 URL，尤其是被外部引用的文章路径。迁移后的文件名和目录尽量保持不变；如必须调整，应明确配置重定向或保留旧入口。
 
-2. 新建文件夹
+## 最小 VitePress 项目结构
 
-比如：blog-vuepress
-
-3. 项目初始化
-
-```json
-// 命令行:  yarn init -y
-// 文件: package.json
-
-{
-  "name": "blog-vuepress",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "scripts": {
-    "docs:dev": "vuepress dev docs",
-    "docs:build": "vuepress build docs",
-    "deploy": "bash deploy.sh"
-  }
-}
+```text
+docs/
+├── .vitepress/
+│   ├── config.mts
+│   └── theme/
+│       ├── index.ts
+│       └── custom.css
+├── index.md
+└── web/
+    └── vue/
+        └── axios.md
 ```
 
-4. 在 blog-vuepress 根目录下新建 docs
+安装并提供本地开发、构建、预览脚本：
 
-```js
-// 1.命令行:  yarn docs:build
+```sh
+npm install -D vitepress vue
+npm run docs:dev
+npm run docs:build
+npm run docs:preview
+```
 
-// 生成 docs/.vuepress 文件夹,在此文件夹下新建config.js
+实际命令应以项目 `package.json` 为准。团队使用锁文件时，CI 应通过 `npm ci` 等可复现的安装方式执行。
 
-// config.js
-module.exports = {
-  title: '给大佬端茶',
-  description: '给大佬端茶',
-  head: [
-    ['link', { rel: 'icon', href: 'image/给大佬端茶.png' }],
-  ],
-  base: '/blog/',
-  markdown: {
-    lineNumbers: true
-  },
+## 配置站点的公共信息
+
+```ts
+import { defineConfig } from 'vitepress'
+
+export default defineConfig({
+  lang: 'zh-CN',
+  title: '锦书致南终',
+  description: '前端开发手记',
+  cleanUrls: true,
   themeConfig: {
-    sidebarDepth: 2,
-    lastUpdated: 'Last Updated',
-    collapsable: true,
-    displayAllHeaders: true,
-    activeHeaderLinks: false,
-    repo: 'https://github.com/yq1930/blog',
-    nav: [  //导航栏
-      { text: '首页', link: '/' },
-      { text: '语雀', link: 'https://www.yuque.com/dashboard/books' },
-      { text: 'GitHub', link: 'https://github.com/yq1930' },
-      {
-        text: 'English', items: [
-          { text: '单词', link: 'https://translate.google.com' }
-        ]
-      },
-    ],
-    sidebar: [  //侧边栏
-      {
-        title: '前端',
-        collapsable: false,
-        children: [
-          ['/web/html', '超文本标记'],
-          ['/web/css', '层叠样式表'],
-          ['/web/js', '解释型编程语言']
-        ]
-      }
-    ]
+    nav: [{ text: '笔记首页', link: '/' }]
   }
-};
-
-// 2.在docs根文件夹下新建README.md
-
-// README.md
-
----
-home: true
-lang: zh-CN
-heroImage: image/给大佬端茶.png
-actionText: 快速进入 →
-actionLink: /web/html
-features:
-- title: GitHub
-  details: 全球最大的'同性交友网站'
-- title: 语雀
-  details: 专业的云端知识库
-- title: Vue
-  details: Vue是一套用于构建用户界面的渐进式框架。与其它大型框架不同的是，Vue 被设计为可以自底向上逐层应用。
-footer: MIT Licensed | Copyright © 2019-present qun ye
----
-
+})
 ```
 
-5. 运行 yarn docs:dev 查看本地效果
+`cleanUrls` 能让页面地址去掉 `.html`，但开启前应先确认部署平台是否支持无扩展名的静态路由。自定义域名站点通常以根路径发布；若发布在仓库子路径下，再设置 `base`。
 
-三、部署到 GitHub Pages
+## 用 GitHub Actions 发布
 
-这里按照https://***.github.io/***方式部署
+构建成功后，将 `docs/.vitepress/dist` 作为部署目录。工作流应只做三件事：检出代码、按锁文件安装依赖、运行构建并发布产物。
 
-1. 在 github 新建一个名为 blog 的仓库
-2. 按照 github 给出的步骤，讲 blog-vuepress 项目 push 上去
-3. 在 blog-vuepress 根目录下新建 deploy.sh 脚本
+```yaml
+- name: Install dependencies
+  run: npm ci
 
-```sh
-
-#!/usr/bin/env sh
-
-# 确保脚本抛出遇到的错误
-set -e
-
-# 生成静态文件
-yarn run docs:build
-
-# 进入生成的文件夹
-cd docs/.vuepress/dist
-
-# 如果是发布到自定义域名
-# echo 'www.yequn.fun' > CNAME
-
-git init
-git add -A
-git commit -m 'deploy'
-
-# 如果发布到 https://<USERNAME>.github.io
-# git push -f git@github.com:yq1930/blog.github.io.git master
-
-# 如果发布到 https://<USERNAME>.github.io/<REPO> （注意：我们用的是这个方式！！！）
-git push -f git@github.com:yq1930/blog.git master:gh-pages
-
-cd -
-
+- name: Build with VitePress
+  run: npm run docs:build
 ```
 
-4. 在终端上进入 blog-vuepress 项目中
+不要在部署脚本中写入账号、令牌或私钥。发布权限应使用平台提供的临时令牌或仓库机密配置；域名信息则放在受版本控制的 `CNAME` 文件中。
 
-`命令行: yarn deploy`
+## 迁移验收清单
 
-![deploy](https://cdn.nlark.com/yuque/0/2019/png/242278/1567496870204-b1ba90e0-02bc-4926-9483-c01dc127a59b.png?x-oss-process=image/resize,w_746)
+- `npm run docs:build` 在干净环境中通过。
+- 首页、每个侧边栏入口和文内链接都没有 404。
+- 桌面与移动宽度下，导航、搜索和代码块可以正常使用。
+- 自定义域名、站点根路径、图标和分享元信息正确。
+- 对照原站确认关键 URL 未变化，或已提供兼容入口。
 
-5. 在 github 中仓库 blog 设置
-
-![github1](https://cdn.nlark.com/yuque/0/2019/png/242278/1567496941180-6b64b00f-0d2b-46db-aea2-8e71b7f57e0f.png?x-oss-process=image/resize,w_746)
-
-![github2](https://cdn.nlark.com/yuque/0/2019/png/242278/1567496982334-aa49de30-dcce-4dd8-941b-f0ebe2a8efb9.png?x-oss-process=image/resize,w_746)
-
-在 github pages 的 source 下选择我们在脚本中 push 上来的分支，然后点击 `https://yq1930.github.io/blog/` 看看是否部署成功
-
-**这里有个坑**：
-
-github 中的公钥是以前 windows 上，在 mac 上并没有更换，导致在 输入命令行: `yarn deploy` 时并没有产生 `gh-pages breanch 分支`，
-导致找不到这个分支，**解决的办法是**:进入到 mac 上本地 .ssh 中 id_rsa.pub 中的公钥添加到 github 上即可
-
-这样在 github pages 分支上找到这个 gh-pages breanch 分支
-
-四、自定义域名
-
-1. 需要:一个域名（阿里云等）
-2. 解析域名，看下图
-
-![aliyun](https://cdn.nlark.com/yuque/0/2019/png/242278/1567565645943-69598caf-a885-40a3-804a-9bf91ee6aa46.png?x-oss-process=image/resize,w_746)
-
-比如：我的域名 `yequn.fun`（阿里云购买的域名）
-
-3.
-
-```sh
-
-`文件 deploy.sh`
-
-#!/usr/bin/env sh
-
-# 确保脚本抛出遇到的错误
-set -e
-
-# 生成静态文件
-yarn run docs:build
-
-# 进入生成的文件夹
-cd docs/.vuepress/dist
-
-# 如果是发布到自定义域名
-echo 'www.yequn.fun' > CNAME
-
-git init
-git add -A
-git commit -m 'deploy'
-
-# 如果发布到 https://<USERNAME>.github.io
-# git push -f git@github.com:yq1930/blog.github.io.git master
-
-# 如果发布到 https://<USERNAME>.github.io/<REPO>
-git push -f git@github.com:yq1930/blog.git master:gh-pages
-
-cd -
-
-```
-
-4. config.js 中 `base：'/'`,这里发现写法变成 `base:'/blog/'`，跳转 404 页面
-
-![404](https://cdn.nlark.com/yuque/0/2019/png/242278/1567565731813-f0933e78-4bc3-4b77-83f3-b4c7508ae912.png)
-
-5. 命令行: `yarn deploy` 输入网址:www.yequn.fun 即可
-
-PS: 在本地运行项目时，命令行: `vuepress dev docs`
+迁移的完成标志不是“页面看起来差不多”，而是内容、链接和发布流程都能被稳定地重复验证。
