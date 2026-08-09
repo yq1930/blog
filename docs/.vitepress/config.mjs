@@ -62,7 +62,8 @@ export default defineConfig({
           text: '样式组织',
           items: [
             { text: 'BEM 命名规范', link: '/web/css/BEM规范' },
-            { text: '响应式布局与容器', link: '/web/css/layout' }
+            { text: '响应式布局与容器', link: '/web/css/layout' },
+            { text: 'CSS 变量与主题系统', link: '/web/css/design-tokens' }
           ]
         }
       ],
@@ -71,6 +72,7 @@ export default defineConfig({
           text: '前端体验',
           items: [
             { text: '性能与加载体验', link: '/web/frontend/performance' },
+            { text: '可访问性实战', link: '/web/frontend/accessibility' },
             { text: 'React Native iOS 环境排查', link: '/web/frontend/reactNative' }
           ]
         }
@@ -91,7 +93,8 @@ export default defineConfig({
             { text: '错误处理与请求追踪', link: '/backend/error-handling' },
             { text: '服务边界与业务编排', link: '/backend/service-design' },
             { text: '数据库索引与事务', link: '/backend/database' },
-            { text: '缓存策略与一致性', link: '/backend/cache' }
+            { text: '缓存策略与一致性', link: '/backend/cache' },
+            { text: '消息队列与异步任务', link: '/backend/message-queue' }
           ]
         }
       ],
@@ -101,6 +104,7 @@ export default defineConfig({
           items: [
             { text: '前端工程化地图', link: '/engineering/toolchain' },
             { text: 'Git 协作与提交边界', link: '/engineering/git-workflow' },
+            { text: '代码评审实践', link: '/engineering/code-review' },
             { text: '测试分层与回归保护', link: '/engineering/testing' },
             { text: '持续集成与发布', link: '/engineering/ci-delivery' },
             { text: '日志、指标与可观测性', link: '/engineering/observability' },
@@ -115,7 +119,9 @@ export default defineConfig({
             { text: 'LLM 应用基础', link: '/ai/llm-basics' },
             { text: 'Prompt 工程实践', link: '/ai/prompt-engineering' },
             { text: 'Agent 架构与工具调用', link: '/ai/agent-architecture' },
-            { text: 'RAG 检索增强生成', link: '/ai/rag' }
+            { text: 'RAG 检索增强生成', link: '/ai/rag' },
+            { text: 'LLM 多模型选型与成本控制', link: '/ai/model-selection' },
+            { text: 'AI 辅助编码工作流', link: '/ai/ai-coding-workflow' }
           ]
         }
       ]
