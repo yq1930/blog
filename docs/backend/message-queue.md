@@ -76,6 +76,36 @@ emailQueue.process('welcome', async (job) => {
 
 不带幂等的重试，是产生重复数据（重复扣款、重复发邮件）的常见原因。
 
+## 常见错误：重试不幂等，导致重复扣款
+
+这是异步任务里代价最高的坑——钱和数据出问题：
+
+```js
+// 发送扣款任务，失败就重试
+paymentQueue.process('charge', async (job) => {
+  await chargeCard(job.data)  // 没有任何"是否已扣过"的判断
+})
+```
+
+**症状**：用户只下了一单，却收到两次扣款；只注册了一次，却收到三封欢迎邮件。最难查的是——日志显示每次重试都"成功"了，看起来一切正常，钱却多扣了。
+
+**为什么错**：消费者处理完任务、但在发"完成确认"之前崩了，重启后会把这个任务再取出来执行一次。如果执行逻辑不幂等，重试就等于重复执行了一次真实的副作用（扣款、发邮件、创建订单）。
+
+**正确做法**：执行体必须能识别"这件事我已经做过"：
+
+```js
+paymentQueue.process('charge', async (job) => {
+  // 用幂等键判断是否已处理
+  const exists = await db.query('SELECT 1 FROM payments WHERE idempotency_key = ?', [job.data.key])
+  if (exists) return  // 已处理，跳过
+
+  await chargeCard(job.data)
+  await db.query('INSERT INTO payments (idempotency_key, ...) VALUES (?, ...)', [job.data.key])
+})
+```
+
+发邮件就先查"这封发过吗"，创建订单就用幂等键去重。**重试一定会发生，执行逻辑必须假设自己会被重复调用**。
+
 ## 优先级与并发
 
 不是所有任务都同等重要。系统通知邮件可以慢慢发，密码重置邮件应该优先；报表可以排队，支付回调要尽快处理。用优先级队列让重要任务插队。

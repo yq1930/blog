@@ -95,6 +95,28 @@ document.querySelector('#todo-list')?.addEventListener('click', (event) => {
 })
 ```
 
+## 常见错误：`innerHTML` 渲染外部内容导致 XSS
+
+把接口返回或用户输入的内容直接拼进 `innerHTML`，是前端最经典的安全漏洞：
+
+```js
+// 接口/用户输入直接进 innerHTML
+list.innerHTML = `<li>${item.name}</li>`
+```
+
+**症状**：当 `item.name` 里含有 `<img src=x onerror="steal(document.cookie)">` 这类内容时，脚本会被执行——用户 Cookie 被偷、页面被注入恶意弹窗、或后台数据被静默篡改。更隐蔽的是，内容含 `<` 或 `&` 时，列表结构本身会被破坏（标签被错误解析）。
+
+**为什么错**：`innerHTML` 会把字符串当作 HTML 解析，外部内容里的标签和事件属性会被真实执行。浏览器无法区分"你想展示的尖括号"和"你想执行的标签"。
+
+**正确做法**：纯文本一律用 `textContent`，它只当文字、不当标签：
+
+```js
+const item = document.createElement('li')
+item.textContent = item.name  // 永远安全
+```
+
+确需渲染富文本时，用专门的白名单净化库过滤后再赋值。原则：**任何来自外部的内容，默认都不配被信任为 HTML**。
+
 ## 一份页面交互检查表
 
 - 用按钮触发动作、用链接导航；不要把 `div` 伪装成可点击控件。

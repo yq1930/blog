@@ -81,6 +81,36 @@ async function search(keyword) {
 
 取消是正常控制流，不应当显示为“系统错误”。在错误处理处识别取消原因后安静结束即可。
 
+## 常见错误：在 `forEach` 里用 `async` 回调
+
+需要"依次处理一批异步任务"时，很多人直觉地写 `forEach` + `await`，但这正是异步里最隐蔽的坑：
+
+```js
+// 看起来对，实际不会等待
+ids.forEach(async (id) => {
+  await deleteUser(id)
+})
+console.log('全部完成') // 会在删除还没结束时就执行
+```
+
+**症状**：循环"跑完了"但任务其实没结束；后续代码提前执行；外层的 `try/catch` 抓不到里面的异常；并发触发还可能撞上接口限流。最迷惑的是——本地数据少时偶尔正常，上线后偶发出错又难复现。
+
+**为什么错**：`forEach` 不等待回调返回的 Promise，也不会把多个 Promise 串起来。它只是"把回调丢出去"，至于回调里的异步什么时候完成、有没有失败，`forEach` 一概不管。
+
+**正确做法**：要串行用 `for...of`，要并发用 `Promise.all`：
+
+```js
+// 串行：一个完成再做下一个
+for (const id of ids) {
+  await deleteUser(id)
+}
+
+// 并发：同时发起，全部完成再继续
+await Promise.all(ids.map((id) => deleteUser(id)))
+```
+
+记住一条：`forEach` 是同步的，它不认识 `async`。循环里要 `await`，就别用 `forEach`。
+
 ## 异步代码检查表
 
 - 每个加载状态都要有成功、空数据和失败出口。

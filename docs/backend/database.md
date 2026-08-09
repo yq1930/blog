@@ -46,6 +46,33 @@ LIMIT 20;
 
 事务内尽量短：不要等待用户输入、远程接口或长时间计算。并发写入时，还需考虑隔离级别、唯一约束、版本字段和死锁重试策略。
 
+## 常见错误：N+1 查询
+
+列表接口慢，但单条查询明明很快——十有八九是 N+1。先查出 20 篇文章，再循环里逐条查每篇文章的作者：
+
+```js
+const articles = await db.query('SELECT * FROM articles LIMIT 20')
+for (const a of articles) {
+  a.author = await db.query('SELECT * FROM users WHERE id = ?', [a.author_id])
+}
+```
+
+**症状**：详情页打开飞快，列表页却要等好几秒；慢查询日志里，`SELECT * FROM users WHERE id = ?` 这一条被调了几十上百次；本地测试数据少感觉不到，数据量一上来接口就超时。
+
+**为什么错**：查询次数随列表长度线性增长——20 条文章就是 1 + 20 = 21 次查询，100 条就是 101 次。每次查询都有网络往返和解析开销，它们累加起来远超查询本身。
+
+**正确做法**：一次性把所有作者按 id 集合批量取出，再在内存里组装：
+
+```js
+const articles = await db.query('SELECT * FROM articles LIMIT 20')
+const authorIds = [...new Set(articles.map(a => a.author_id))]
+const authors = await db.query('SELECT * FROM users WHERE id IN (?)', [authorIds])
+const authorMap = new Map(authors.map(u => [u.id, u]))
+articles.forEach(a => { a.author = authorMap.get(a.author_id) })
+```
+
+从 N+1 变成固定的 2 次查询，无论列表多长都不再膨胀。ORM 里用 `include`/`preload`/`with` 关联预加载，本质上做的也是这件事。
+
 ## 数据层检查表
 
 - 查询只取当前页面真正需要的列。

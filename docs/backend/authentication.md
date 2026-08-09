@@ -30,6 +30,35 @@ description: 分清“你是谁”“你能做什么”和“登录如何保持�
 
 身份验证失败返回未认证；身份有效但无权操作目标资源时返回无权限。两种情况对前端提示、审计和安全排查都不同。
 
+## 常见错误：信任客户端传来的用户 ID
+
+把请求体或 URL 参数里的 `userId` 直接当身份用，是后端最危险的越权漏洞（IDOR）：
+
+```js
+// 任何人都能改成别人的 userId
+app.get('/orders', (req, res) => {
+  const userId = req.query.userId   // 客户端可控！
+  return db.query('SELECT * FROM orders WHERE user_id = ?', [userId])
+})
+```
+
+**症状**：用户 A 把 URL 里的 `?userId=1` 改成 `?userId=2`，就看到了用户 B 的全部订单。更严重的是攻击者写个脚本遍历 id，能把全库用户数据拖走。这种漏洞不会报错、不会触发监控，通常要等数据泄露才被发现。
+
+**为什么错**：`req.query.userId` 是客户端可以任意篡改的值，把它当身份等于让用户自己声明"我是谁"。身份必须来自服务端验证过的会话或令牌，绝不能来自请求参数。
+
+**正确做法**：从验证后的凭据里取身份，再按归属判断权限：
+
+```js
+app.get('/orders', (req, res) => {
+  const actor = req.user  // 来自已验证的会话/令牌
+  // 只能查自己的，管理员才能查指定用户
+  const targetId = actor.role === 'admin' ? req.query.userId : actor.id
+  return db.query('SELECT * FROM orders WHERE user_id = ?', [targetId])
+})
+```
+
+记住：**凡是客户端传来的身份字段，默认都是不可信的**。身份只能从服务端验证过的凭据里提取。
+
 ## 授权规则靠近业务动作
 
 “只能编辑自己创建的文章”“管理员可查看全部订单”属于业务规则。不要只在菜单隐藏按钮，也不要只靠路由层保护。

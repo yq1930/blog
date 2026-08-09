@@ -63,6 +63,8 @@ const { data: { items = [] } = {} } = response
 
 嵌套解构很深时，可读性会下降。此时先保存中间对象，通常比一行“技巧性代码”更好维护。
 
+> 解构默认值只在值为 `undefined` 时生效，`null` 不会触发。接口返回 `null` 时，`const { name = '匿名' } = res` 得到的是 `null` 而非 `'匿名'`，需要用 `??` 兜底。
+
 ## 数组方法：从“怎么循环”转向“想得到什么”
 
 `map`、`filter` 和 `reduce` 不会修改原数组，适合把转换逻辑写成连续的数据管道。
@@ -80,6 +82,16 @@ const paidTotal = orders
   .reduce((total, amount) => total + amount, 0)
 
 console.log(paidTotal) // 144
+```
+
+> **常见错误**：`reduce` 不传初始值时，空数组会直接报错 `Reduce of empty array with no initial value`。有数据时一切正常，列表一旦为空就崩溃——这种"偶发报错"很难第一时间定位到 `reduce`。始终传初始值（如上面的 `0`），能彻底避免。
+
+```js
+// 错误：空数组会抛错
+const total = items.reduce((sum, n) => sum + n)
+
+// 正确：始终传初始值
+const total = items.reduce((sum, n) => sum + n, 0)
 ```
 
 | 方法 | 返回值 | 适用问题 |
