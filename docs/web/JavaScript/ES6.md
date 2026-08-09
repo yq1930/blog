@@ -1,221 +1,139 @@
-## var 、let 和 const
+---
+title: ES6：作用域、模块与数据处理
+description: 用现代 JavaScript 最常见的语法，建立可预测的变量、模块和数组处理习惯。
+---
 
-- var
+# ES6：作用域、模块与数据处理
 
-  - var 声明的变量会被提升到作用域顶端 可以在变量声明前使用
+现代 JavaScript 的重点不是“记住更多语法”，而是让变量的生命周期、数据的流向和模块的边界都可预测。下面这几组规则覆盖了日常代码里最容易混淆的地方。
 
-- let const
+## 用 `const` 开始，用 `let` 表示会重新赋值
 
-  - 暂时性死区 不能在变量未声明的情况下使用 而且不能重复使用
+| 声明方式 | 作用域 | 是否可重新赋值 | 适合场景 |
+| --- | --- | --- | --- |
+| `const` | 块级作用域 | 否 | 默认选择；对象和数组本身仍可修改内容 |
+| `let` | 块级作用域 | 是 | 计数器、循环索引、状态切换 |
+| `var` | 函数作用域 | 是 | 维护历史代码时才会遇到 |
 
-  - 变量提升原因是为了解决函数间相互调用的情况
+`let` 与 `const` 在声明前不可访问，这段范围称为**暂时性死区**。这能更早暴露拼写错误和错误的执行顺序。
 
-- 总结:
-  - 1.  提升: 函数 > 变量 函数提升会把整个函数提升到作用域顶部, 变量提升只会把声明
-        提交到作用域顶部
-  - 2. var 可以在声明前使用 let/const 不可以在声明前使用,存在暂时性死区
-  - 3. const 声明常量 不能再次赋值
-  - 4. let const 作用范围是块级作用域，var 则是函数作用域
-  - 5. let const 相同的变量名不能重复声明
+```js
+const project = { name: 'notes' }
+project.name = 'field-notes' // 可以：修改对象属性
 
-## 原型继承 和 Class 继承
+// project = {} // 不可以：不能给绑定重新赋值
 
-#### 组合继承
-
-```javascript
-function Parent(value) {
-  this.val = value;
+if (true) {
+  const scope = 'only here'
 }
 
-Parent.prototype.getValue = function() {
-  console.log(this.val);
-};
+// console.log(scope) // ReferenceError
+```
 
-function Child(value) {
-  Parent.call(this, value);
+> `const` 保护的是变量绑定，不是对象的深度不可变性。需要不可变数据时，应主动复制或使用专门的数据策略。
+
+## 函数声明和变量声明并不等价
+
+函数声明会在所在作用域建立时可用；`var` 虽然会被提升，但它的值在赋值前是 `undefined`。不要依赖任何一种提升来组织代码，把声明放在首次使用之前会更清楚。
+
+```js
+greet('南终')
+
+function greet(name) {
+  return `你好，${name}`
 }
 
-Child.prototype = new Parent();
-
-const child = new Child(1);
-
-child.getValue();
-// child instanceof Parent;
-console.log(child instanceof Parent);
+// 不推荐：变量存在，但函数值尚未赋入
+// sayHi('南终')
+// const sayHi = (name) => `你好，${name}`
 ```
 
-#### 寄生组合继承
+## 用解构和默认值减少防御代码
 
-```javascript
-function Parent(value) {
-  this.val = value;
+解构适合从明确形状的数据中拿出少量字段；当字段可能缺失时，要给默认值。
+
+```js
+function formatProfile({ name = '匿名用户', role = 'reader' } = {}) {
+  return `${name} · ${role}`
 }
 
-Parent.prototype.getValue = function() {
-  console.log(this.val);
-};
+const response = { data: { items: ['a', 'b'] } }
+const { data: { items = [] } = {} } = response
+```
 
-function Child(value) {
-  Parent.call(this, value);
+嵌套解构很深时，可读性会下降。此时先保存中间对象，通常比一行“技巧性代码”更好维护。
+
+## 数组方法：从“怎么循环”转向“想得到什么”
+
+`map`、`filter` 和 `reduce` 不会修改原数组，适合把转换逻辑写成连续的数据管道。
+
+```js
+const orders = [
+  { amount: 88, paid: true },
+  { amount: 120, paid: false },
+  { amount: 56, paid: true }
+]
+
+const paidTotal = orders
+  .filter((order) => order.paid)
+  .map((order) => order.amount)
+  .reduce((total, amount) => total + amount, 0)
+
+console.log(paidTotal) // 144
+```
+
+| 方法 | 返回值 | 适用问题 |
+| --- | --- | --- |
+| `map` | 新数组 | 每一项都要转换 |
+| `filter` | 新数组 | 只保留满足条件的项 |
+| `find` | 单项或 `undefined` | 找到第一个匹配项即可 |
+| `some` / `every` | 布尔值 | 判断是否存在 / 是否全部满足 |
+| `reduce` | 任意累积结果 | 求和、分组、构建对象 |
+
+## ES Module：一个文件只暴露它负责的能力
+
+优先使用具名导出表达稳定的公共能力；默认导出更适合一个文件只有一个主体的情况。导入路径要写完整，并避免通过循环依赖让模块初始化顺序变得难以理解。
+
+```js
+// money.js
+export function formatMoney(cents) {
+  return `¥${(cents / 100).toFixed(2)}`
 }
 
-Child.prototype = Object.create(Parent.prototype, {
-  constructor: {
-    value: Child,
-    enumerable: false,
-    writable: true,
-    configurable: true
-  }
-});
+// checkout.js
+import { formatMoney } from './money.js'
 
-const child = new Child(1);
-
-child.getValue();
-// child instanceof Parent;
-console.log(child instanceof Parent);
+console.log(formatMoney(1250))
 ```
 
-#### Class 继承
+## `Proxy`：为对象访问设置统一入口
 
-```javascript
-class Parent {
-  constructor(value) {
-    this.val = value;
-  }
-  getValue() {
-    console.log(this.val);
-  }
-}
+`Proxy` 可以拦截对象操作。它适合校验、日志、响应式实现等底层场景；业务代码不应为了“炫技”给每个对象加代理。
 
-class Child extends Parent {
-  constructor(value) {
-    super(value);
-  }
-}
+```js
+function watch(target, onChange) {
+  return new Proxy(target, {
+    set(object, key, value, receiver) {
+      const previous = Reflect.get(object, key, receiver)
+      const changed = previous !== value
+      const result = Reflect.set(object, key, value, receiver)
 
-let child = new Child(1);
-child.getValue();
-console.log(child instanceof Parent);
-```
-
-## 模块化
-
-#### 1. AMD 和 CMD
-
-- 写法
-
-```javascript
-// AMD
-define(["./a", "./b"], function(a, b) {
-  a.do();
-  b.do();
-});
-
-// CMD
-define(function(require, exports, module) {
-  var a = require("./a");
-  a.doSomething();
-});
-```
-
-#### 2. CommonJS
-
-- 写法
-
-```javascript
-// a.js
-module.exports = {
-  a: 1
-};
-
-exports.a = 1; //(或者这样写)
-
-// b.js
-var module = require("./a.js");
-module.a;
-```
-
-#### 3. ES Module
-
-- 写法
-
-```javascript
-// 引入模块
-import a from "./a.js";
-import { a } from "./a.js";
-
-// 导出模块
-export function a() {}
-
-export default a(){}
-```
-
-## Proxy
-
-- 作用：用来自定义对象。在 Vue3.0 中将通过 Proxy 替换 Object.defineProperty
-- 原因：Proxy 无需一层层递归为每个属性添加代理，一次即可完成，并且性能上更好，缺点：兼容性不好
-
-```javascript
-let onWatch = (obj, setBind, getLogger) => {
-  let handler = {
-    get(target, property, receiver) {
-      getLogger(target, property);
-      return Reflect.get(target, property, value);
-    },
-    set(target, property, value, receiver) {
-      setBind(value, property);
-      return Reflect.set(target, property, value);
+      if (changed) onChange(key, value, previous)
+      return result
     }
-  };
-  return new Proxy(obj, handler);
-};
+  })
+}
 
-let obj = { a: 1 };
+const state = watch({ count: 0 }, (key, value) => {
+  console.log(`${String(key)} changed to ${value}`)
+})
 
-let p = onWatch(
-  obj,
-  (v, property) => {
-    console.log(`监听属性${property}改变${v}`);
-  },
-  (target, property) => {
-    console.log(`'${property}' = ${target[property]}`);
-  }
-);
-
-p.a = 2;
-p.a;
+state.count += 1
 ```
 
-## map、filter、reduce
+## 记住这份检查表
 
-#### map
-
-- 作用：遍历原数组，生成新数组
-- 3 个参数：当前索引元素 索引 原数组
-
-```javascript
-[1, 2, 3].map(v => v + 1);
-```
-
-#### filter
-
-- 作用：遍历原数组，将返回 true 的元素放入新数组
-- 3 个参数：当前索引元素 索引 原数组
-
-```javascript
-let arr = [1, 2, 3];
-let newArr = arr.filter(item => item !== 3);
-console.log(newArr); // => [1, 2]
-```
-
-#### reduce
-
-- 作用：将数组中的元素通过回调函数最终转换为一个值
-- 2 个参数：回调函数 初始值
-- 回调函数：4 个参数 => 累计值 当前元素 当前索引 原数组
-
-```javascript
-let arr = [1, 2, 3];
-let sum = arr.reduce((acc, current) => acc + current, 0);
-console.log(sum);
-```
+- 默认使用 `const`；只有确实要重新赋值时使用 `let`。
+- 先明确输入和输出，再选择数组方法；不要为了函数式而嵌套过深。
+- 模块导出的是边界，不是“方便从别处拿变量”的通道。
+- 使用 `Proxy` 前先确认普通函数、对象封装或框架能力是否已经足够。

@@ -1,121 +1,103 @@
-## window 浏览器窗口
+---
+title: 浏览器与 DOM 操作
+description: 理解 window、document、地址栏和事件，让页面交互从“能跑”变成可维护。
+---
 
-1. innerWidth:浏览器窗口内部宽度
-2. innerHeight:浏览器窗口内部高度
+# 浏览器与 DOM 操作
 
-3. outerWidth:浏览器整个窗口宽度
-4. outerHeight:浏览器整个窗口高度
+浏览器不仅执行 JavaScript，还提供了一组与页面、地址、设备和网络交互的 Web API。先区分职责，再写 DOM 代码，能避开许多偶发问题。
 
-#### navigator 浏览器信息
+## 先分清四个常用对象
 
-1. navigator.appName: 浏览器名称
-2. navigator.appVersion: 浏览器版本
-3. navigator.language: 浏览器设置语言
-4. navigator.platform: 操作系统类型
-5. navigator.userAgent: 浏览器设定的 User-Agent 字符串
+| 对象 | 负责什么 | 常见用途 |
+| --- | --- | --- |
+| `window` | 浏览器窗口与全局环境 | 定时器、视口大小、历史记录 |
+| `document` | 当前页面的 DOM 树 | 查询、创建、更新元素 |
+| `location` | 当前 URL | 读取查询参数、跳转页面 |
+| `navigator` | 浏览器能力和环境信息 | 功能检测、语言偏好 |
 
-#### screen 屏幕信息
+屏幕尺寸不等于视口尺寸。做布局判断时，通常使用 `window.innerWidth`；`screen.width` 描述的是设备屏幕，不会随着浏览器窗口缩放而改变。
 
-1. screen.width: 屏幕宽度 单位：像素
-2. screen.height: 屏幕高度 单位：像素
-3. screen.colorDepth: 返回颜色数位
+```js
+const params = new URLSearchParams(window.location.search)
+const keyword = params.get('q')
 
-#### location 当前页面 url 地址信息
-
-1. location.assign() 加载一个新页面
-2. location.reload() 加载当前页面
-
-#### document 当前页面, 也就是整个 DOM 树的根节点
-
-## 操作 DOM
-
-#### DOM 操作
-
-1. 更新
-2. 遍历
-3. 添加
-4. 删除
-
-##### 第一种获取方式
-
-- ID 获取: document.getElementById()
-- class 获取: document.getElementsByClassName()
-- 标签获取: document.getElementsByTagName()
-
-##### 第二种获取方式
-
-- querySelector() => 获取指定节点
-- querySelectorAll() => 获取全部节点
-
-## 更新 DOM
-
-1. innerHTML
-
-```javascript
-// <p id="p-id">...</p>
-var p = document.querySelector("#p-id");
-p.innerHTML = "xxx";
+if (keyword) {
+  document.title = `搜索：${keyword}`
+}
 ```
 
-2. innerText(不返回隐藏元素的文本) / innerContent(返回所有文本, IE<9 不支持 textContent)
+## 查询元素：选择最稳定的标识
 
-```javascript
-// <p id="p-id">...</p>
-var p = document.querySelector("#p-id");
-p.innerText = "xxx";
-```
-
-3. css 操作
-
-```javascript
-// <p id="p-id">...</p>
-var p = document.querySelector("#p-id");
-
-// 在javascript中需要驼峰写法
-p.style.color = "#xxxxx";
-p.style.backgroundColor = "#xxxx";
-```
-
-#### 插入 DOM
-
-- 1. appendChild 把一个子节点添加到父节点的最后一个子节点
+`querySelector` 返回第一个匹配元素，`querySelectorAll` 返回静态的节点列表。业务脚本优先依赖语义化 class 或 `data-*` 属性，而不是样式层级或动态生成的 ID。
 
 ```html
-<p id="js">JavaScript</p>
-<div id="list">
-  <p id="java">Java</p>
-  <p id="python">Python</p>
-  <p id="scheme">Scheme</p>
-</div>
-
-<script>
-  // 把<p id="js">JavaScript</p>添加到<div id="list">的最后一项：
-
-  var js = document.getElementById("js"),
-    list = document.getElementById("list");
-  list.appendChild(js);
-</script>
+<button type="button" data-action="save">保存</button>
 ```
 
-- 2. insertBefore 把子节点插入到指定的位置
-- 用法: parentElement.insertBefore(newElement,referenceElement)
+```js
+const saveButton = document.querySelector('[data-action="save"]')
 
-```html
-<div id="list">
-  <p id="java">Java</p>
-  <p id="python">Python</p>
-  <p id="scheme">Scheme</p>
-</div>
-
-<script>
-  var list = document.getElementById("list"),
-    ref = document.getElementById("python"),
-    haskell = document.createElement("p");
-
-  haskell.id = "haskell";
-  haskell.innerText = "Haskell";
-  list.insertBefore(haskell, ref);
-</script>
+saveButton?.addEventListener('click', saveDraft)
 ```
 
-#### PS:[来源：廖雪峰 JavaScript 教程 - 浏览器](https://www.liaoxuefeng.com/wiki/1022910821149312/1023022129105888)
+可选链 `?.` 让“页面上不存在该元素”的情况安全退出，但不应该用它掩盖页面结构配置错误。关键元素缺失时，应在开发环境中明确报错。
+
+## 更新内容：默认使用 `textContent`
+
+| API | 是否解析 HTML | 使用建议 |
+| --- | --- | --- |
+| `textContent` | 否 | 展示普通文本的默认选择 |
+| `innerHTML` | 是 | 仅在内容可信且确实需要 HTML 时使用 |
+| `classList` | 不涉及 | 切换视觉状态 |
+| `setAttribute` | 不涉及 | 更新语义和可访问性属性 |
+
+不要将来自用户、接口或 URL 的内容直接赋给 `innerHTML`，这会带来 XSS 风险。
+
+```js
+function setSaveState(button, saving) {
+  button.disabled = saving
+  button.textContent = saving ? '保存中…' : '保存'
+  button.setAttribute('aria-busy', String(saving))
+}
+```
+
+## 创建元素比拼接字符串更安全
+
+当列表项需要交互时，用 DOM API 创建元素，数据和结构会保持分离。
+
+```js
+function createTodoItem(todo) {
+  const item = document.createElement('li')
+  item.dataset.id = todo.id
+
+  const label = document.createElement('span')
+  label.textContent = todo.title
+
+  item.append(label)
+  return item
+}
+```
+
+## 用事件委托处理动态列表
+
+把监听器绑定在稳定的父元素上，通过 `event.target.closest()` 找到真正的操作按钮。后续新插入的子项无需重新绑定事件。
+
+```js
+document.querySelector('#todo-list')?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-action]')
+  if (!button) return
+
+  const item = button.closest('li')
+  if (button.dataset.action === 'remove') {
+    item?.remove()
+  }
+})
+```
+
+## 一份页面交互检查表
+
+- 用按钮触发动作、用链接导航；不要把 `div` 伪装成可点击控件。
+- 文本更新用 `textContent`，外部内容进入 HTML 前必须净化。
+- 异步操作期间同步更新 `disabled`、文案和 `aria-busy`，避免重复提交。
+- 尺寸和能力判断以功能检测为主，不要根据 User-Agent 猜浏览器类型。
