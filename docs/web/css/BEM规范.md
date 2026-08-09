@@ -19,7 +19,7 @@ BEM 是 **Block（块）— Element（元素）— Modifier（修饰符）** 的
 <article class="article-card article-card--featured">
   <p class="article-card__meta">工程化</p>
   <h2 class="article-card__title">前端工程化地图</h2>
-  <a class="article-card__link" href="/web/other/newTechnology">继续阅读</a>
+  <a class="article-card__link" href="/engineering/toolchain">继续阅读</a>
 </article>
 ```
 

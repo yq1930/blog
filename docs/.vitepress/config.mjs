@@ -2,8 +2,8 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: '锦书致南终',
-  description: '把零散的前端经验，整理成下一次可直接查阅的路标。',
+  title: '野塘漫',
+  description: '从浏览器到服务端，把真实开发经验整理成可复用的技术手记。',
   cleanUrls: true,
   appearance: false,
   lastUpdated: true,
@@ -13,7 +13,7 @@ export default defineConfig({
   ],
   themeConfig: {
     logo: '/icon/avatar.png',
-    siteTitle: '锦书致南终',
+    siteTitle: '野塘漫',
     outline: {
       level: [2, 3],
       label: '本页索引'
@@ -25,15 +25,11 @@ export default defineConfig({
       prev: '上一篇',
       next: '下一篇'
     },
-    editLink: {
-      pattern: 'https://github.com/yq1930/blog/edit/master/docs/:path',
-      text: '在 GitHub 上改进这篇笔记'
-    },
     nav: [
       { text: '笔记首页', link: '/' },
-      { text: 'JavaScript', link: '/web/JavaScript/ES6' },
-      { text: 'Vue', link: '/web/vue/axios' },
-      { text: '工程化', link: '/web/other/newTechnology' }
+      { text: '前端', link: '/web/JavaScript/ES6' },
+      { text: '后端', link: '/backend/overview' },
+      { text: '工程化', link: '/engineering/toolchain' }
     ],
     sidebar: {
       '/web/JavaScript/': [
@@ -42,7 +38,9 @@ export default defineConfig({
           items: [
             { text: 'ES6：作用域、模块与数据处理', link: '/web/JavaScript/ES6' },
             { text: '浏览器与 DOM 操作', link: '/web/JavaScript/browser' },
-            { text: '原型与继承', link: '/web/JavaScript/prototype' }
+            { text: '原型与继承', link: '/web/JavaScript/prototype' },
+            { text: '异步流程与 Promise', link: '/web/JavaScript/async' },
+            { text: 'TypeScript 的类型边界', link: '/web/JavaScript/types' }
           ]
         }
       ],
@@ -51,6 +49,8 @@ export default defineConfig({
           text: 'Vue 与站点',
           items: [
             { text: 'Axios 请求层', link: '/web/vue/axios' },
+            { text: '组件设计与状态边界', link: '/web/vue/component-design' },
+            { text: '路由与页面状态', link: '/web/vue/router' },
             { text: '从 VuePress 到 VitePress', link: '/web/vue/vuepress' },
             { text: 'VitePress 内容能力', link: '/web/vue/vuepress-plugin' }
           ]
@@ -59,7 +59,19 @@ export default defineConfig({
       '/web/css/': [
         {
           text: '样式组织',
-          items: [{ text: 'BEM 命名规范', link: '/web/css/BEM规范' }]
+          items: [
+            { text: 'BEM 命名规范', link: '/web/css/BEM规范' },
+            { text: '响应式布局与容器', link: '/web/css/layout' }
+          ]
+        }
+      ],
+      '/web/frontend/': [
+        {
+          text: '前端体验',
+          items: [
+            { text: '性能与加载体验', link: '/web/frontend/performance' },
+            { text: 'React Native iOS 环境排查', link: '/web/frontend/reactNative' }
+          ]
         }
       ],
       '/web/jQuery/': [
@@ -68,19 +80,34 @@ export default defineConfig({
           items: [{ text: 'jQuery：选择与遍历', link: '/web/jQuery/jQuery' }]
         }
       ],
-      '/web/other/': [
+      '/backend/': [
         {
-          text: '工程化与接口',
+          text: '后端全景',
           items: [
-            { text: '前端工程化地图', link: '/web/other/newTechnology' },
-            { text: 'REST API 设计', link: '/web/other/restful' },
-            { text: 'Gulp 4：维护旧项目', link: '/web/other/gulp' },
-            { text: 'React Native iOS 环境排查', link: '/web/other/reactNative' }
+            { text: '后端服务如何组织', link: '/backend/overview' },
+            { text: 'REST API 设计', link: '/backend/restful' },
+            { text: '认证、授权与会话', link: '/backend/authentication' },
+            { text: '错误处理与请求追踪', link: '/backend/error-handling' },
+            { text: '服务边界与业务编排', link: '/backend/service-design' },
+            { text: '数据库索引与事务', link: '/backend/database' },
+            { text: '缓存策略与一致性', link: '/backend/cache' }
+          ]
+        }
+      ],
+      '/engineering/': [
+        {
+          text: '协作与交付',
+          items: [
+            { text: '前端工程化地图', link: '/engineering/toolchain' },
+            { text: 'Git 协作与提交边界', link: '/engineering/git-workflow' },
+            { text: '测试分层与回归保护', link: '/engineering/testing' },
+            { text: '持续集成与发布', link: '/engineering/ci-delivery' },
+            { text: '日志、指标与可观测性', link: '/engineering/observability' },
+            { text: 'Gulp 4：维护旧项目', link: '/engineering/gulp' }
           ]
         }
       ]
     },
-    socialLinks: [{ icon: 'github', link: 'https://github.com/yq1930' }],
     footer: {
       message: '为复用而记录，为理解而整理。',
       copyright: 'MIT Licensed · Copyright © 2019–present qun ye'

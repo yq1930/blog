@@ -1,104 +1,115 @@
 <template>
   <div class="field-home">
     <header class="field-nav">
-      <a class="field-brand" href="/" aria-label="返回首页">
+      <a class="field-brand" href="/" aria-label="返回野塘漫首页">
         <img src="/icon/avatar.png" alt="" width="36" height="36" />
-        <span>锦书致南终</span>
+        <span>野塘漫</span>
       </a>
       <nav aria-label="主导航">
-        <a href="#library">笔记索引</a>
-        <a href="/web/vue/axios">开始阅读</a>
-        <a href="https://github.com/yq1930/blog" target="_blank" rel="noreferrer">源代码 <span aria-hidden="true">↗</span></a>
+        <a href="#library">文章索引</a>
+        <a href="/web/JavaScript/ES6">前端</a>
+        <a href="/backend/overview">后端</a>
       </nav>
     </header>
 
     <main>
       <section class="field-hero" aria-labelledby="home-title">
         <div class="field-hero__copy">
-          <p class="field-kicker">FRONTEND FIELD NOTES <span>2019—2026</span></p>
-          <h1 id="home-title">把踩过的坑，<br />整理成下一次的路标。</h1>
-          <p class="field-lede">这里收录前端开发中反复遇到的概念、方案与取舍。每一篇只解决一个明确的问题，方便在需要时快速找回答案。</p>
+          <p class="field-kicker">YETANG TECH NOTES <span>持续整理中</span></p>
+          <h1 id="home-title">从浏览器到服务端，<br />让经验在野塘漫开。</h1>
+          <p class="field-lede">这里不是按技术名词堆砌的收藏夹，而是围绕开发现场整理的工作手记：先理解系统如何运作，再找到眼下问题可以落地的解法。</p>
           <div class="field-actions">
-            <a class="field-button field-button--primary" href="/web/vue/axios">从请求层开始 <span aria-hidden="true">→</span></a>
-            <a class="field-button field-button--quiet" href="#library">浏览全部笔记</a>
+            <a class="field-button field-button--primary" href="/web/JavaScript/ES6">从前端基础开始 <span aria-hidden="true">→</span></a>
+            <a class="field-button field-button--quiet" href="#library">按分类阅读</a>
           </div>
         </div>
 
-        <aside class="route-card" aria-label="推荐阅读路线">
+        <aside class="route-card" aria-label="推荐学习路线">
           <div class="route-card__head">
-            <span>推荐阅读路线</span>
-            <strong>03</strong>
+            <span>推荐学习路线</span>
+            <strong>04</strong>
           </div>
           <ol>
             <li>
               <span>01</span>
-              <a href="/web/JavaScript/ES6"><b>语言基础</b><small>作用域、模块、数组处理</small></a>
+              <a href="/web/JavaScript/ES6"><b>理解运行环境</b><small>语言、浏览器与样式基础</small></a>
             </li>
             <li>
               <span>02</span>
-              <a href="/web/vue/axios"><b>页面与数据</b><small>浏览器、DOM、请求层</small></a>
+              <a href="/web/vue/component-design"><b>构建前端应用</b><small>组件、路由、数据与性能</small></a>
             </li>
             <li>
               <span>03</span>
-              <a href="/web/other/newTechnology"><b>交付与维护</b><small>接口、构建、站点发布</small></a>
+              <a href="/backend/overview"><b>连接后端服务</b><small>接口、认证、数据与缓存</small></a>
+            </li>
+            <li>
+              <span>04</span>
+              <a href="/engineering/git-workflow"><b>稳定交付与维护</b><small>协作、测试、发布与观测</small></a>
             </li>
           </ol>
-          <p class="route-card__note">按问题阅读，不必按顺序完成。</p>
+          <p class="route-card__note">按当前问题取用，不必按顺序完成。</p>
         </aside>
       </section>
 
       <section id="library" class="field-library" aria-labelledby="library-title">
         <div class="section-heading">
           <p class="field-kicker">KNOWLEDGE SHELF</p>
-          <h2 id="library-title">按工作现场取用</h2>
-          <p>不是教程合集，而是一排能在开发现场随手抽出来的卡片。</p>
+          <h2 id="library-title">沿着系统的边界阅读</h2>
+          <p>从用户看得见的页面，一直读到服务、数据与交付流程。每一类文章都说明它解决什么问题，以及与上下游如何衔接。</p>
         </div>
 
         <div class="shelf-grid">
           <a class="shelf-card shelf-card--js" href="/web/JavaScript/ES6">
-            <span class="shelf-card__mark">JS</span>
-            <span class="shelf-card__meta">3 篇基础笔记</span>
-            <h3>语言与浏览器</h3>
-            <p>厘清作用域、原型链与 DOM 操作，理解代码究竟运行在哪里。</p>
-            <span class="shelf-card__link">查看 JavaScript <i aria-hidden="true">→</i></span>
+            <span class="shelf-card__mark">WEB</span>
+            <span class="shelf-card__meta">8 篇 · 语言与界面</span>
+            <h3>前端基础</h3>
+            <p>从 JavaScript、浏览器和 CSS 起步，建立对页面运行、状态变化和响应式布局的可靠直觉。</p>
+            <span class="shelf-card__link">阅读前端基础 <i aria-hidden="true">→</i></span>
           </a>
-          <a class="shelf-card shelf-card--vue" href="/web/vue/axios">
-            <span class="shelf-card__mark">VUE</span>
-            <span class="shelf-card__meta">3 篇实践笔记</span>
-            <h3>数据与文档</h3>
-            <p>把请求处理、站点迁移和内容组织放进同一条清晰的工作流。</p>
-            <span class="shelf-card__link">查看 Vue 与站点 <i aria-hidden="true">→</i></span>
+          <a class="shelf-card shelf-card--vue" href="/web/vue/component-design">
+            <span class="shelf-card__mark">APP</span>
+            <span class="shelf-card__meta">7 篇 · 组件与体验</span>
+            <h3>前端应用</h3>
+            <p>把组件边界、路由状态、请求层与加载体验组织成用户真正能完成任务的页面，并覆盖跨端环境的排查经验。</p>
+            <span class="shelf-card__link">阅读前端应用 <i aria-hidden="true">→</i></span>
           </a>
-          <a class="shelf-card shelf-card--craft" href="/web/other/newTechnology">
-            <span class="shelf-card__mark">KIT</span>
-            <span class="shelf-card__meta">4 篇工程笔记</span>
-            <h3>接口与工程化</h3>
-            <p>从 REST 资源建模到旧项目构建，把工具选择与维护边界讲明白。</p>
-            <span class="shelf-card__link">查看工程化 <i aria-hidden="true">→</i></span>
+          <a class="shelf-card shelf-card--server" href="/backend/overview">
+            <span class="shelf-card__mark">API</span>
+            <span class="shelf-card__meta">7 篇 · 服务与接口</span>
+            <h3>后端与接口</h3>
+            <p>梳理请求如何穿过认证、业务服务和数据层，并让错误、权限与资源模型有一致语义。</p>
+            <span class="shelf-card__link">阅读后端笔记 <i aria-hidden="true">→</i></span>
+          </a>
+          <a class="shelf-card shelf-card--data" href="/engineering/toolchain">
+            <span class="shelf-card__mark">FLOW</span>
+            <span class="shelf-card__meta">6 篇 · 协作与交付</span>
+            <h3>数据与工程化</h3>
+            <p>从工程化地图、提交边界到测试、发布与可观测性，把“能运行”推进到“可长期维护”。</p>
+            <span class="shelf-card__link">阅读工程化笔记 <i aria-hidden="true">→</i></span>
           </a>
         </div>
       </section>
 
       <section class="field-recent" aria-labelledby="recent-title">
         <div class="recent-intro">
-          <p class="field-kicker">START HERE</p>
-          <h2 id="recent-title">三篇适合立即解决问题的笔记</h2>
-          <p>每篇都从一个工作中的提问开始，先给判断，再给可复用的实现边界。</p>
+          <p class="field-kicker">START WITH A QUESTION</p>
+          <h2 id="recent-title">从一个真实问题开始</h2>
+          <p>每篇文章都先明确判断边界，再给出可以复用的实现方式和检查清单。</p>
         </div>
         <div class="recent-list">
           <a href="/web/vue/axios">
-            <span>请求处理</span>
-            <strong>如何把 Axios 从页面里拿出去？</strong>
+            <span>前端数据</span>
+            <strong>如何把请求逻辑从页面组件里拿出去？</strong>
             <i aria-hidden="true">↗</i>
           </a>
-          <a href="/web/other/restful">
-            <span>接口设计</span>
-            <strong>资源、动作与 HTTP 方法怎样对应？</strong>
+          <a href="/backend/authentication">
+            <span>访问控制</span>
+            <strong>认证、授权和会话分别该放在哪里？</strong>
             <i aria-hidden="true">↗</i>
           </a>
-          <a href="/web/css/BEM规范">
-            <span>样式协作</span>
-            <strong>BEM 到底解决了什么命名问题？</strong>
+          <a href="/engineering/testing">
+            <span>质量保护</span>
+            <strong>哪些行为值得用自动化测试守住？</strong>
             <i aria-hidden="true">↗</i>
           </a>
         </div>
@@ -106,8 +117,8 @@
     </main>
 
     <footer class="field-footer">
-      <span>锦书致南终 · Frontend field notes</span>
-      <span>为复用而记录，为理解而整理。</span>
+      <span>野塘漫 · 技术手记</span>
+      <span>从问题出发，为复用而记录。</span>
     </footer>
   </div>
 </template>
