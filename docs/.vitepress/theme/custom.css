@@ -59,7 +59,7 @@ body { background: var(--field-paper); }
 .field-kicker { margin: 0 0 14px; color: var(--field-tide); font-family: var(--vp-font-family-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; }
 .field-kicker span { margin-left: 10px; color: #7a9291; }
 .field-hero h1, .section-heading h2, .recent-intro h2 { margin: 0; color: var(--field-deep); font-family: "Songti SC", STSong, "Noto Serif CJK SC", serif; font-weight: 700; letter-spacing: 0.01em; }
-.field-hero h1 { max-width: 740px; font-size: clamp(2.75rem, 5.4vw, 4.8rem); line-height: 1.12; }
+.field-hero h1 { max-width: 740px; font-size: clamp(2.6rem, 4.8vw, 3.8rem); line-height: 1.14; text-wrap: balance; }
 .field-lede { max-width: 550px; margin: 25px 0 0; color: #486169; font-size: 17px; line-height: 1.85; }
 .field-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 36px; }
 .field-button { display: inline-flex; gap: 14px; align-items: center; justify-content: center; min-height: 46px; padding: 0 20px; border: 1px solid transparent; font-size: 14px; font-weight: 700; text-decoration: none; transition: transform 180ms ease, background 180ms ease; }
@@ -86,25 +86,28 @@ body { background: var(--field-paper); }
 .section-heading .field-kicker { grid-column: 1 / -1; }
 .section-heading h2, .recent-intro h2 { font-size: clamp(2rem, 3.2vw, 3rem); line-height: 1.2; }
 .section-heading > p:last-child, .recent-intro > p:last-child { margin: 0; color: #567078; line-height: 1.75; }
-.shelf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
-.shelf-card { position: relative; display: flex; flex-direction: column; min-height: 300px; padding: 25px; overflow: hidden; color: var(--field-ink); border: 1px solid var(--field-line); text-decoration: none; transition: transform 180ms ease, box-shadow 180ms ease; }
+.shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 40px; }
+.shelf-card { position: relative; display: flex; flex-direction: column; min-height: 270px; padding: 25px; overflow: hidden; color: var(--field-ink); border: 1px solid var(--field-line); text-decoration: none; transition: transform 180ms ease, box-shadow 180ms ease; }
 .shelf-card:hover { transform: translateY(-5px); box-shadow: 7px 7px 0 rgba(24, 51, 61, 0.15); }
 .shelf-card--js { background: #e7f1ed; }
 .shelf-card--vue { background: #f9eee1; }
-.shelf-card--craft { color: #e9f3f0; border-color: var(--field-deep); background: var(--field-deep); }
+.shelf-card--server { background: #e7eef2; }
+.shelf-card--data { color: #e9f3f0; border-color: var(--field-deep); background: var(--field-deep); }
 .shelf-card::after { position: absolute; right: -28px; bottom: -38px; width: 160px; height: 160px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.13; content: ""; }
 .shelf-card__mark, .shelf-card__meta, .shelf-card__link { position: relative; z-index: 1; }
 .shelf-card__mark { color: var(--field-tide); font-family: var(--vp-font-family-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.12em; }
 .shelf-card--vue .shelf-card__mark { color: var(--field-coral); }
-.shelf-card--craft .shelf-card__mark { color: #8fe0d8; }
+.shelf-card--server .shelf-card__mark { color: #2d6380; }
+.shelf-card--data .shelf-card__mark { color: #8fe0d8; }
 .shelf-card__meta { margin-top: 26px; color: #688088; font-size: 12px; }
-.shelf-card--craft .shelf-card__meta { color: #aac9c4; }
+.shelf-card--data .shelf-card__meta { color: #aac9c4; }
 .shelf-card h3 { position: relative; z-index: 1; margin: 7px 0 0; font-family: "Songti SC", STSong, serif; font-size: 25px; }
 .shelf-card p { position: relative; z-index: 1; margin: 14px 0; color: #516a70; font-size: 14px; line-height: 1.75; }
-.shelf-card--craft p { color: #c1d7d3; }
+.shelf-card--data p { color: #c1d7d3; }
 .shelf-card__link { margin-top: auto; color: var(--field-tide); font-size: 13px; font-weight: 700; }
 .shelf-card--vue .shelf-card__link { color: #b34a34; }
-.shelf-card--craft .shelf-card__link { color: #8fe0d8; }
+.shelf-card--server .shelf-card__link { color: #2d6380; }
+.shelf-card--data .shelf-card__link { color: #8fe0d8; }
 .shelf-card__link i { margin-left: 6px; font-size: 17px; font-style: normal; }
 .field-recent { display: grid; grid-template-columns: 0.78fr 1.22fr; gap: 56px; width: 100%; padding: 88px max(24px, calc((100% - 1180px) / 2)); color: #e7f4ef; background: var(--field-deep); }
 .recent-intro h2 { color: inherit; }
@@ -135,7 +138,8 @@ body { background: var(--field-paper); }
   .field-nav nav a { font-size: 12px; }
   .field-nav nav a:first-child { display: none; }
   .field-hero { min-height: 0; padding: 62px 0; }
-  .field-hero h1 { font-size: clamp(2.35rem, 12vw, 3.2rem); }
+  .field-hero h1 { font-size: clamp(1.75rem, 9vw, 2.2rem); }
+  .section-heading h2, .recent-intro h2 { font-size: clamp(1.6rem, 6vw, 1.9rem); }
   .field-lede { font-size: 15px; }
   .field-actions { margin-top: 28px; }
   .field-button { width: 100%; }
