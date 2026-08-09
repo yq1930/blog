@@ -6,3 +6,5 @@ node_modules/
 # VitePress 构建产物与缓存
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+# 极少数情况下 Vite 会在项目根生成 .vitepress 临时缓存，一并忽略
+.vitepress/
