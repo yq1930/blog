@@ -38,10 +38,20 @@ export default defineConfig({
           text: 'JavaScript 基础',
           items: [
             { text: 'ES6：作用域、模块与数据处理', link: '/web/JavaScript/ES6' },
-            { text: '浏览器与 DOM 操作', link: '/web/JavaScript/browser' },
             { text: '原型与继承', link: '/web/JavaScript/prototype' },
+            { text: '闭包与作用域', link: '/web/JavaScript/closure' },
             { text: '异步流程与 Promise', link: '/web/JavaScript/async' },
+            { text: '事件循环与执行模型', link: '/web/JavaScript/event-loop' },
             { text: 'TypeScript 的类型边界', link: '/web/JavaScript/types' }
+          ]
+        },
+        {
+          text: '工程实践',
+          items: [
+            { text: '浏览器与 DOM 操作', link: '/web/JavaScript/browser' },
+            { text: '正则表达式实战', link: '/web/JavaScript/regex' },
+            { text: '错误处理与异常', link: '/web/JavaScript/error-handling' },
+            { text: '模块化演进', link: '/web/JavaScript/modules' }
           ]
         }
       ],
@@ -55,24 +65,63 @@ export default defineConfig({
             { text: '从 VuePress 到 VitePress', link: '/web/vue/vuepress' },
             { text: 'VitePress 内容能力', link: '/web/vue/vuepress-plugin' }
           ]
+        },
+        {
+          text: '进阶与工程化',
+          items: [
+            { text: '组合式函数与逻辑复用', link: '/web/vue/composables' },
+            { text: 'Pinia 状态管理', link: '/web/vue/pinia' },
+            { text: 'Vue 性能优化', link: '/web/vue/performance' },
+            { text: 'SSR 与 Nuxt 入门', link: '/web/vue/ssr' },
+            { text: 'Vue 组件测试', link: '/web/vue/testing' }
+          ]
         }
       ],
       '/web/css/': [
         {
+          text: '布局',
+          items: [
+            { text: '响应式布局与容器', link: '/web/css/layout' },
+            { text: 'Flexbox 弹性布局', link: '/web/css/flexbox' },
+            { text: 'Grid 网格布局', link: '/web/css/grid' }
+          ]
+        },
+        {
           text: '样式组织',
           items: [
             { text: 'BEM 命名规范', link: '/web/css/BEM规范' },
-            { text: '响应式布局与容器', link: '/web/css/layout' },
-            { text: 'CSS 变量与主题系统', link: '/web/css/design-tokens' }
+            { text: 'CSS 变量与主题系统', link: '/web/css/design-tokens' },
+            { text: 'CSS 架构与组织', link: '/web/css/architecture' },
+            { text: '现代 CSS 选择器', link: '/web/css/selectors' }
+          ]
+        },
+        {
+          text: '体验与性能',
+          items: [
+            { text: '动画与过渡', link: '/web/css/animation' },
+            { text: 'CSS 性能优化', link: '/web/css/performance' },
+            { text: '颜色与暗色模式', link: '/web/css/color-and-dark-mode' }
           ]
         }
       ],
       '/web/frontend/': [
         {
-          text: '前端体验',
+          text: '交互体验',
           items: [
             { text: '性能与加载体验', link: '/web/frontend/performance' },
             { text: '可访问性实战', link: '/web/frontend/accessibility' },
+            { text: '表单设计与校验', link: '/web/frontend/form-design' },
+            { text: '移动端适配', link: '/web/frontend/mobile' }
+          ]
+        },
+        {
+          text: '架构与工程',
+          items: [
+            { text: '前端状态管理', link: '/web/frontend/state-management' },
+            { text: '浏览器兼容性', link: '/web/frontend/compatibility' },
+            { text: '前端调试技巧', link: '/web/frontend/debugging' },
+            { text: '前端与 SEO', link: '/web/frontend/seo' },
+            { text: '构建工具选型', link: '/web/frontend/build-tools' },
             { text: 'React Native iOS 环境排查', link: '/web/frontend/reactNative' }
           ]
         }
@@ -89,12 +138,19 @@ export default defineConfig({
           items: [
             { text: '后端服务如何组织', link: '/backend/overview' },
             { text: 'REST API 设计', link: '/backend/restful' },
+            { text: 'API 版本管理', link: '/backend/api-versioning' },
             { text: '认证、授权与会话', link: '/backend/authentication' },
             { text: '错误处理与请求追踪', link: '/backend/error-handling' },
-            { text: '服务边界与业务编排', link: '/backend/service-design' },
+            { text: '服务边界与业务编排', link: '/backend/service-design' }
+          ]
+        },
+        {
+          text: '数据与可靠性',
+          items: [
             { text: '数据库索引与事务', link: '/backend/database' },
             { text: '缓存策略与一致性', link: '/backend/cache' },
-            { text: '消息队列与异步任务', link: '/backend/message-queue' }
+            { text: '消息队列与异步任务', link: '/backend/message-queue' },
+            { text: '并发与限流', link: '/backend/concurrency' }
           ]
         }
       ],
@@ -105,23 +161,45 @@ export default defineConfig({
             { text: '前端工程化地图', link: '/engineering/toolchain' },
             { text: 'Git 协作与提交边界', link: '/engineering/git-workflow' },
             { text: '代码评审实践', link: '/engineering/code-review' },
+            { text: 'API 契约与前后端联调', link: '/engineering/api-contract' },
+            { text: '环境与配置管理', link: '/engineering/environment' }
+          ]
+        },
+        {
+          text: '质量与演进',
+          items: [
             { text: '测试分层与回归保护', link: '/engineering/testing' },
             { text: '持续集成与发布', link: '/engineering/ci-delivery' },
             { text: '日志、指标与可观测性', link: '/engineering/observability' },
+            { text: '技术债务治理', link: '/engineering/tech-debt' },
             { text: 'Gulp 4：维护旧项目', link: '/engineering/gulp' }
           ]
         }
       ],
       '/ai/': [
         {
-          text: 'AI 与 Agent',
+          text: '基础理论',
           items: [
             { text: 'LLM 应用基础', link: '/ai/llm-basics' },
             { text: 'Prompt 工程实践', link: '/ai/prompt-engineering' },
+            { text: '多模态应用入门', link: '/ai/multimodal' }
+          ]
+        },
+        {
+          text: '应用架构',
+          items: [
             { text: 'Agent 架构与工具调用', link: '/ai/agent-architecture' },
             { text: 'RAG 检索增强生成', link: '/ai/rag' },
             { text: 'LLM 多模型选型与成本控制', link: '/ai/model-selection' },
-            { text: 'AI 辅助编码工作流', link: '/ai/ai-coding-workflow' }
+            { text: 'LLM 评测与 Guardrails', link: '/ai/evaluation-guardrails' }
+          ]
+        },
+        {
+          text: '工程与产品',
+          items: [
+            { text: 'AI 辅助编码工作流', link: '/ai/ai-coding-workflow' },
+            { text: 'LLM 应用安全', link: '/ai/security' },
+            { text: 'AI 产品设计边界', link: '/ai/product-design' }
           ]
         }
       ]
