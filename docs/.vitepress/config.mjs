@@ -27,12 +27,40 @@ export default defineConfig({
     },
     nav: [
       { text: '笔记首页', link: '/' },
+      { text: '真实工程实践', link: '/practice/' },
       { text: '前端', link: '/web/JavaScript/ES6' },
       { text: '后端', link: '/backend/overview' },
       { text: '工程化', link: '/engineering/toolchain' },
       { text: 'AI', link: '/ai/llm-basics' }
     ],
     sidebar: {
+      '/practice/': [
+        {
+          text: '阅读地图',
+          items: [
+            { text: '系列导读', link: '/practice/' },
+            { text: '多端系统全景图', link: '/practice/full-stack-system-map' },
+            { text: '跨端 API 契约', link: '/practice/cross-client-api-contract' },
+            { text: '遗留系统渐进式治理', link: '/practice/legacy-modernization-roadmap' },
+            { text: '私有源码的公开写作', link: '/practice/public-writing-from-private-code' }
+          ]
+        },
+        {
+          text: '服务端实践',
+          items: [
+            { text: 'Yaf 多应用单体', link: '/practice/yaf-multi-app-architecture' },
+            { text: '高一致性业务工作流', link: '/practice/transactional-business-workflow' }
+          ]
+        },
+        {
+          text: '客户端实践',
+          items: [
+            { text: 'Vue 2 多端工程治理', link: '/practice/vue2-multi-terminal-engineering' },
+            { text: '移动 H5 可靠性', link: '/practice/mobile-h5-reliability' },
+            { text: '原生小程序架构', link: '/practice/native-mini-program-architecture' }
+          ]
+        }
+      ],
       '/web/JavaScript/': [
         {
           text: 'JavaScript 基础',

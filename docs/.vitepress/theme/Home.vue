@@ -7,6 +7,7 @@
       </a>
       <nav aria-label="主导航">
         <a href="#library">文章索引</a>
+        <a href="/practice/">实践</a>
         <a href="/web/JavaScript/ES6">前端</a>
         <a href="/backend/overview">后端</a>
         <a href="/ai/llm-basics">AI</a>
@@ -18,9 +19,9 @@
         <div class="field-hero__copy">
           <p class="field-kicker">YETANG TECH NOTES <span>持续整理中</span></p>
           <h1 id="home-title">从浏览器到服务端，<br />把现场经验整理成可复用的手记。</h1>
-          <p class="field-lede">这里不是按技术名词堆砌的收藏夹，而是围绕开发现场整理的工作手记：先理解系统如何运作，再找到眼下问题可以落地的解法。</p>
+          <p class="field-lede">这里不是按技术名词堆砌的收藏夹，而是围绕开发现场整理的工作手记：从多端系统的边界出发，再找到眼下问题可以落地的解法。</p>
           <div class="field-actions">
-            <a class="field-button field-button--primary" href="/web/JavaScript/ES6">从前端基础开始 <span aria-hidden="true">→</span></a>
+            <a class="field-button field-button--primary" href="/practice/">阅读真实工程实践 <span aria-hidden="true">→</span></a>
             <a class="field-button field-button--quiet" href="#library">按分类阅读</a>
           </div>
         </div>
@@ -28,7 +29,7 @@
         <aside class="route-card" aria-label="推荐学习路线">
           <div class="route-card__head">
             <span>推荐学习路线</span>
-            <strong>04</strong>
+            <strong>05</strong>
           </div>
           <ol>
             <li>
@@ -47,6 +48,10 @@
               <span>04</span>
               <a href="/engineering/git-workflow"><b>稳定交付与维护</b><small>协作、测试、发布与观测</small></a>
             </li>
+            <li>
+              <span>05</span>
+              <a href="/practice/"><b>回到真实工程</b><small>跨端边界、可靠性与渐进演进</small></a>
+            </li>
           </ol>
           <p class="route-card__note">按当前问题取用，不必按顺序完成。</p>
         </aside>
@@ -60,6 +65,22 @@
         </div>
 
         <div class="shelf-grid">
+          <a class="shelf-card shelf-card--practice" href="/practice/">
+            <span class="shelf-card__mark">FIELD NOTES</span>
+            <span class="shelf-card__meta">9 篇 · 跨端系统与可靠性</span>
+            <h3>真实工程实践</h3>
+            <p>从一个多应用服务端、PC 管理端、移动 H5 与小程序共存的系统中，提炼边界、契约、事务和渐进式治理方法。</p>
+            <span class="shelf-card__link">进入实践系列 <i aria-hidden="true">→</i></span>
+            <span class="practice-route" aria-hidden="true">
+              <span class="practice-route__clients">
+                <i>PC</i>
+                <i>H5</i>
+                <i>MINI</i>
+              </span>
+              <b>→</b>
+              <strong>CORE</strong>
+            </span>
+          </a>
           <a class="shelf-card shelf-card--js" href="/web/JavaScript/ES6">
             <span class="shelf-card__mark">WEB</span>
             <span class="shelf-card__meta">8 篇 · 语言与界面</span>
@@ -105,19 +126,19 @@
           <p>每篇文章都先明确判断边界，再给出可以复用的实现方式和检查清单。</p>
         </div>
         <div class="recent-list">
-          <a href="/web/vue/axios">
-            <span>前端数据</span>
-            <strong>如何把请求逻辑从页面组件里拿出去？</strong>
+          <a href="/practice/full-stack-system-map">
+            <span>系统全景</span>
+            <strong>一个需求会同时影响哪些端和哪些边界？</strong>
             <i aria-hidden="true">↗</i>
           </a>
-          <a href="/backend/authentication">
-            <span>访问控制</span>
-            <strong>认证、授权和会话分别该放在哪里？</strong>
+          <a href="/practice/transactional-business-workflow">
+            <span>一致性</span>
+            <strong>数据库成功、外部调用失败后怎样恢复？</strong>
             <i aria-hidden="true">↗</i>
           </a>
-          <a href="/engineering/testing">
-            <span>质量保护</span>
-            <strong>哪些行为值得用自动化测试守住？</strong>
+          <a href="/practice/legacy-modernization-roadmap">
+            <span>系统演进</span>
+            <strong>不推倒重来，旧系统如何一步步变好？</strong>
             <i aria-hidden="true">↗</i>
           </a>
         </div>
