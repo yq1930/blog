@@ -1,439 +1,360 @@
 ---
-title: 跨端 API 契约：让 PC、H5 与小程序说同一种语言
-description: 从身份上下文、响应模型、错误分类、幂等、金额时间到兼容发布，建立可长期演进的多客户端 API 契约。
+title: 跨端 API 契约：PC、H5 和小程序怎样统一
+description: 用一套简单的请求、响应、错误和幂等约定，减少多客户端联调中的重复判断与意外兼容问题。
 ---
 
-# 跨端 API 契约：让 PC、H5 与小程序说同一种语言
+# 跨端 API 契约：PC、H5 和小程序怎样统一
 
-一个 API 被单个网页调用时，很多约定可以藏在调用代码里；当它同时服务 PC 管理端、移动 H5、小程序和后台任务时，这些隐式约定会迅速变成故障来源。
+同一个接口被 PC、H5 和小程序调用后，最容易出现这种情况：
 
-稳定契约不等于“字段永远不变”。它意味着服务端和客户端对变化方式有共识：谁提供身份、什么叫成功、哪些失败可以重试、重复提交会不会产生两次结果，以及新旧版本怎样同时在线。
+```text
+PC 判断 success
+H5 判断 code
+小程序匹配中文错误文案
+```
 
-> 本文接口、字段、错误码和示例数据均为教学用途，与任何实际系统无关。
+接口没有真正的共同语言，任何改动都要逐端排查。
 
-## 契约不只是接口文档
+本文根据三个 Vue 项目和多个小程序项目中的请求封装整理。代码已经删除真实地址、业务参数和身份信息。
 
-完整契约至少包含七个维度：
+## 读完你能解决什么
 
-| 维度 | 需要明确的内容 |
+- 给不同客户端定义同一种成功和失败结构；
+- 让登录失效只恢复一次，不连续弹窗或跳转；
+- 避免重复点击和超时重试产生两条数据；
+- 安全修改字段，让新旧客户端可以同时在线。
+
+## 项目里为什么会出现多种请求写法
+
+不同年代和运行环境自然会形成不同实现：
+
+| 客户端 | 常见实现 |
 | --- | --- |
-| 传输 | HTTP 方法、路径、Content-Type、超时、大小限制 |
-| 身份 | 凭证放在哪里，如何过期，如何恢复业务上下文 |
-| 输入 | 必填、可空、格式、范围、未知字段策略 |
-| 输出 | 成功结构、空结果、分页、字段稳定性 |
-| 错误 | HTTP 状态、业务错误码、用户提示、重试性 |
-| 一致性 | 幂等键、并发冲突、最终一致的状态查询 |
-| 演进 | 新旧字段共存期、弃用窗口、发布顺序 |
+| PC 管理端 | Axios 实例 + 独立 API 模块 |
+| Vue 2 移动 H5 | 挂在 `Vue.prototype` 上的公共请求方法 |
+| 另一个 H5 | 自己封装 `XMLHttpRequest` |
+| 原生小程序 | `wx.request` 外再包一层登录和错误处理 |
 
-OpenAPI 或 TypeScript 类型只能描述其中一部分。比如 `amount: string` 无法自动说明它以元还是分表示，也不能说明重复请求是否会再次扣减余额。语义约定必须被明确记录并通过测试保护。
+底层实现可以不同，但页面看到的结果应该一致。
 
-## 先统一协议层与业务层
+```text
+Axios ─────────┐
+XMLHttpRequest ├──▶ 统一 ApiResult ──▶ 页面
+wx.request ────┘
+```
 
-一个常见问题是所有结果都返回 HTTP 200，再在 JSON 中放一个 `success`。另一个极端是完全依赖 HTTP 状态，却没有稳定的业务错误标识。更实用的方案是让两层各司其职：
+## 先定义最简单的响应结构
 
-- HTTP 状态表达传输和通用语义；
-- 稳定业务码表达客户端需要分支处理的领域结果；
-- 面向人的 `message` 只用于展示或诊断，不参与程序判断。
+成功：
 
 ```json
 {
-  "ok": false,
-  "error": {
-    "code": "APPOINTMENT_SLOT_CONFLICT",
-    "message": "该时间段已不可用",
-    "retryable": false,
-    "details": {
-      "suggestedAction": "refresh_slots"
-    }
+  "ok": true,
+  "data": {
+    "id": "demo_001",
+    "status": "confirmed"
   },
   "requestId": "req_demo_001"
 }
 ```
 
-客户端应判断 `error.code`，而不是匹配中文提示。提示文案可能因为产品调整、国际化或服务端优化而变化。
-
-## 一套推荐的响应模型
-
-成功响应：
+失败：
 
 ```json
 {
-  "ok": true,
-  "data": {
-    "id": "apt_demo_001",
-    "status": "confirmed"
+  "ok": false,
+  "error": {
+    "code": "RESOURCE_CONFLICT",
+    "message": "当前内容已经发生变化",
+    "retryable": false
   },
   "requestId": "req_demo_002"
 }
 ```
 
-失败响应：
+顶层四个字段各有一个职责：
 
-```json
-{
-  "ok": false,
-  "error": {
-    "code": "VALIDATION_FAILED",
-    "message": "提交内容需要修改",
-    "retryable": false,
-    "fields": {
-      "startAt": "必须晚于当前时间"
-    }
-  },
-  "requestId": "req_demo_003"
+- `ok`：这次业务是否成功；
+- `data`：成功时的业务数据；
+- `error`：失败详情，成功时不需要；
+- `requestId`：排查这次请求的关联标识。
+
+`error` 内再放稳定的 `code`、给用户看的 `message`，以及是否允许自动重试的 `retryable`。程序判断 `error.code`，不要匹配提示文字。
+
+不要这样写：
+
+```js
+if (message === '请重新登录') {
+  goToLogin()
 }
 ```
 
-列表响应：
+文案改一个字，逻辑就失效。应判断 HTTP 401 或稳定错误码。
 
-```json
-{
-  "ok": true,
-  "data": {
-    "items": [],
-    "page": {
-      "nextCursor": null,
-      "hasMore": false
-    }
-  },
-  "requestId": "req_demo_004"
+## HTTP 状态怎么用
+
+不需要记很多，先把常用的几种统一：
+
+| 状态 | 表示什么 | 客户端通常怎么做 |
+| --- | --- | --- |
+| 200 / 201 | 成功 | 展示结果 |
+| 400 | 输入格式有误 | 标记表单字段 |
+| 401 | 没有有效登录态 | 触发一次登录恢复 |
+| 403 | 已登录但没有权限 | 展示无权限提示 |
+| 404 | 当前范围找不到资源 | 展示空态或返回列表 |
+| 409 | 数据已被别人修改 | 刷新后让用户确认 |
+| 429 | 请求过快 | 等待后再试 |
+| 5xx | 未能返回成功响应，写操作结果可能未知 | 保留现场，先查询再决定是否重试 |
+
+HTTP 状态描述通用结果，业务错误码描述具体原因，两者并不冲突。
+
+## 把请求层写成一个稳定入口
+
+PC 项目中的请求封装可以简化成：
+
+```js
+const service = axios.create({
+  baseURL: process.env.BASE_API,
+  timeout: 15000
+})
+
+service.interceptors.request.use(config => {
+  config.headers['X-Request-Id'] = createRequestId()
+  config.headers.Authorization = sessionStore.authorization()
+  return config
+})
+
+service.interceptors.response.use(
+  response => unwrap(response),
+  error => Promise.reject(normalizeError(error))
+)
+```
+
+实际项目还会处理历史参数和不同环境。页面不需要知道这些细节，它只调用业务 API：
+
+```js
+export function cancelAppointment(id, operationId) {
+  return service.post(`/appointments/${id}/cancel`, null, {
+    headers: { 'Idempotency-Key': operationId }
+  })
 }
 ```
 
-`data` 始终表示业务数据，`requestId` 始终位于顶层。不要让某些接口返回 `data.list`，另一些返回 `rows`，还有一些直接返回数组；这种差异会扩散到每个客户端请求封装中。
+这里的路径和字段是教学示例，不对应真实接口。
 
-## HTTP 状态与业务错误如何配合
+## H5 和小程序只替换传输层
 
-下面是一套可作为起点的映射：
+H5 的底层可以是 `XMLHttpRequest`：
 
-| HTTP 状态 | 含义 | 例子 | 客户端默认动作 |
-| --- | --- | --- | --- |
-| 200 | 请求成功 | 查询或写入完成 | 渲染结果 |
-| 201 | 资源创建成功 | 创建订单 | 使用返回的新标识 |
-| 202 | 已受理，后台处理中 | 导出、异步退款 | 轮询或订阅状态 |
-| 400 | 输入无法解析或校验失败 | 日期格式错误 | 定位表单字段 |
-| 401 | 未建立有效身份 | 会话过期 | 触发单次重新登录 |
-| 403 | 身份有效但无权操作 | 越权访问 | 展示无权限页 |
-| 404 | 当前上下文看不到资源 | 标识不存在或不可见 | 返回列表或空态 |
-| 409 | 当前状态或版本冲突 | 重复占用、并发修改 | 刷新数据后让用户决定 |
-| 422 | 语法有效但业务规则不允许 | 状态不可转换 | 展示明确业务原因 |
-| 429 | 请求过快 | 频率限制 | 按 `Retry-After` 等待 |
-| 5xx | 服务端未完成请求 | 依赖超时、未知异常 | 保留上下文并谨慎重试 |
-
-不是每个团队都必须采用同一映射，关键是全系统一致，并把“是否可重试”从文案中独立出来。
-
-## 把不同渠道身份收敛成统一上下文
-
-PC、H5 和小程序可以有不同登录流程，但业务用例不应该理解这些差异。
-
-```text
-Cookie / Authorization / 平台临时码
-                  │
-                  ▼
-           渠道身份适配器
-                  │
-                  ▼
-actorId + tenantId + locationId + roles + channel
-                  │
-                  ▼
-              业务用例
-```
-
-入口层应完成：
-
-1. 验证凭证真实性和有效期；
-2. 把外部身份映射为内部 `actorId`；
-3. 从服务端可信数据恢复租户、组织和角色；
-4. 校验用户本次选择的工作范围；
-5. 生成或接收 `requestId`。
-
-业务接口不要同时支持“Cookie 里读会话”“查询参数里读会话”“请求体再传一个用户 ID”三种互相覆盖的方式。兼容旧客户端时也应有明确优先级、监控和下线日期。
-
-## 客户端请求层只做协议适配
-
-请求层适合集中处理：
-
-- 基础地址和超时；
-- 凭证注入；
-- `requestId` 与客户端版本；
-- 响应解包；
-- 网络错误归一化；
-- 401 的单航班恢复；
-- 取消请求与基础重试策略。
-
-它不应决定“库存不足后跳到哪个业务页”或“某种角色可以看到哪个按钮”。那属于业务模块和交互层。
-
-```ts
-type ApiError = {
-  kind: 'network' | 'timeout' | 'auth' | 'validation' | 'conflict' | 'server'
-  code?: string
-  message: string
-  retryable: boolean
-  requestId?: string
-  fields?: Record<string, string>
-}
-
-async function request<T>(input: RequestInput): Promise<T> {
-  try {
-    const response = await transport.send(input)
-    if (!response.body.ok) throw fromBusinessError(response)
-    return response.body.data as T
-  } catch (error) {
-    throw normalizeApiError(error)
-  }
+```js
+function sendByXhr(options) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open(options.method, options.url)
+    xhr.timeout = options.timeout || 15000
+    xhr.onload = () => Promise.resolve()
+      .then(() => parseResponse(xhr))
+      .then(resolve, reject)
+    xhr.onerror = () => reject(createNetworkError())
+    xhr.ontimeout = () => reject(createTimeoutError())
+    xhr.send(options.body)
+  })
 }
 ```
 
-页面只面对一种 `ApiError`，不必理解 Axios、小程序运行时或浏览器网络错误的具体形态。
+小程序使用 `wx.request`：
 
-## 401 恢复要防止并发风暴
-
-一个页面加载时可能同时发出多条请求。若会话过期，每条请求都触发登录或刷新，会产生多次跳转和重复弹窗。应使用“单航班”模式：同一时刻只有一个恢复流程，其余请求等待同一个 Promise。
-
-```ts
-let renewing: Promise<void> | null = null
-
-async function ensureSession(): Promise<void> {
-  if (!renewing) {
-    renewing = sessionGateway.renew().finally(() => {
-      renewing = null
+```js
+function sendByMiniProgram(options) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      ...options,
+      success: result => Promise.resolve()
+        .then(() => parseResponse(result))
+        .then(resolve, reject),
+      fail: error => reject(normalizeError(error))
     })
+  })
+}
+```
+
+两者最后都返回相同的 `data`，失败时都抛出相同形状的 `ApiError`。
+
+## 登录失效只允许恢复一次
+
+一个页面可能同时发出五个请求。如果五个请求都收到 401，又各自跳转登录，就会出现连续弹窗和回跳循环。
+
+解决方法叫 **single-flight**，白话就是：同一时间只让一个登录恢复任务执行，其他请求等它。
+
+```js
+let renewing = null
+
+function renewSessionOnce() {
+  if (!renewing) {
+    renewing = Promise.resolve().then(
+      () => sessionService.renew()
+    ).then(
+      value => {
+        renewing = null
+        return value
+      },
+      error => {
+        renewing = null
+        throw error
+      }
+    )
   }
+
   return renewing
 }
 ```
 
-恢复后是否自动重放原请求要谨慎：GET 通常可重放；没有幂等键的写请求不能盲目重放，因为服务端可能已执行成功，只是响应在网络中丢失。
+登录恢复后，查询请求通常可以重放；写请求只有带幂等键时才能安全重放。
 
-## 写接口默认设计幂等
+## 防重复提交不能只靠按钮置灰
 
-移动网络、双击、容器回退和超时重试都会制造重复请求。按钮锁只能改善交互，不能替代服务端幂等。
+按钮置灰只能防当前页面上的连续点击，防不住：
 
-客户端为一次用户意图生成稳定的 `Idempotency-Key`：
+- 用户刷新后再提交；
+- 弱网超时后自动重试；
+- 两个设备同时操作；
+- 服务端已成功，但响应在途中丢失。
 
-```text
-POST /orders
-Idempotency-Key: op_demo_f73a
-```
+客户端可以复用同一个进行中 Promise，改善交互：
 
-服务端在业务事务内记录：
+```js
+const pending = Object.create(null)
 
-```text
-tenant + operation + idempotencyKey
-→ requestFingerprint
-→ status(processing / succeeded / failed)
-→ responseSnapshot
-```
+function submitOnce(key, task) {
+  if (pending[key]) return pending[key]
 
-处理规则：
-
-1. 首次请求占用幂等键并执行业务；
-2. 相同键、相同请求返回首次结果；
-3. 相同键、不同请求返回冲突，避免误复用；
-4. 正在处理中返回明确状态，客户端稍后查询；
-5. 幂等记录保留时间覆盖客户端可能重试的窗口。
-
-幂等键不能只存在内存或单台机器缓存中，否则扩容、重启和负载均衡会让它失效。
-
-## 并发冲突要成为契约的一部分
-
-“最后写入覆盖前一次”并不适合状态、金额和配额。客户端读取可编辑对象时，服务端返回版本：
-
-```json
-{
-  "id": "resource_demo_01",
-  "status": "draft",
-  "version": 7
+  const clear = () => { delete pending[key] }
+  const promise = Promise.resolve().then(task).then(
+    value => {
+      clear()
+      return value
+    },
+    error => {
+      clear()
+      throw error
+    }
+  )
+  pending[key] = promise
+  return promise
 }
 ```
 
-提交时带回 `version: 7`。如果数据库中已经是 8，服务端返回 409 和当前摘要，而不是静默覆盖。
+示例使用 `then(success, failure)` 在两个分支都清锁，兼容一部分没有原生 `Promise.prototype.finally` 的旧 WebView。如果项目已统一注入 Promise polyfill，也可以改用 `finally`。
 
-```json
-{
-  "ok": false,
-  "error": {
-    "code": "VERSION_CONFLICT",
-    "message": "内容已被其他操作更新",
-    "retryable": false,
-    "details": { "currentVersion": 8 }
-  },
-  "requestId": "req_demo_009"
-}
+服务端仍要使用幂等键和唯一约束兜底：
+
+```text
+同一个 Idempotency-Key + 相同请求
+→ 返回第一次结果
+
+同一个 Idempotency-Key + 不同请求
+→ 返回冲突，不再次执行
 ```
 
-客户端应刷新并让用户重新确认。自动合并只有在字段彼此独立且规则明确时才安全。
-
-## 金额、时间和枚举必须消除歧义
+## 金额、时间和状态怎样传
 
 ### 金额
 
-跨端传输金额推荐使用最小货币单位的整数，或使用明确精度的十进制字符串。不要使用二进制浮点做财务运算。
+使用最小货币单位的整数，不直接用浮点数：
 
 ```json
-{
-  "amountMinor": 12990,
-  "currency": "CNY"
-}
+{ "amountMinor": 12990, "currency": "CNY" }
 ```
-
-服务端负责最终计算，客户端展示时格式化。折扣、税费和舍入方式也属于契约，不能散落在页面中。
 
 ### 时间
 
-瞬时时间使用带时区的 ISO 8601 字符串：
+时间点使用带时区的 ISO 字符串：
 
 ```json
 { "createdAt": "2030-06-01T09:30:00+08:00" }
 ```
 
-纯日期使用 `YYYY-MM-DD`，不要附加零点后再让不同时区解析。预约的“本地 09:30”通常还需要业务时区，不能只靠设备时区推断。
+只有日期时使用 `YYYY-MM-DD`，不要随意补零点。
 
-### 枚举
+### 状态
 
-服务端新增枚举值时，旧客户端必须有未知值兜底：
+客户端必须能处理服务端新增的状态：
 
-```ts
-function statusLabel(status: string): string {
-  return STATUS_LABELS[status] ?? '未知状态'
+```js
+function statusLabel(status) {
+  return STATUS_LABELS[status] || '未知状态'
 }
 ```
 
-客户端不应因为一个新状态而白屏，也不能把未知终态误报成“处理中”。更稳妥的做法是展示中性兜底并触发数据刷新或遥测；服务端则不应复用旧枚举值表达新语义。
+未知状态不要直接当成“成功”或“处理中”，应提示刷新并记录监控。
 
-## 空值、缺失和空集合不是一回事
+## 列表接口只选一种分页方式
 
-契约需要区分：
-
-- 字段缺失：当前版本不提供或无权限看到；
-- `null`：字段存在但没有值；
-- `""`：存在一个空字符串，通常只适合文本输入；
-- `[]`：集合存在且当前为空；
-- `{}`：对象存在但没有属性。
-
-更新接口还要区分“未提交该字段”和“明确清空该字段”。可以使用 PATCH 语义，或为命令定义显式的 `clearXxx`，不要依赖 PHP/JavaScript 的宽松空值判断。
-
-## 分页要选择一种稳定模型
-
-页码分页适合稳定、可跳页的数据集；游标分页更适合持续新增的时间流。
-
-游标应由服务端生成并视为不透明字符串：
+普通后台列表可使用页码：
 
 ```json
 {
   "items": [],
-  "page": {
-    "nextCursor": "opaque_demo_cursor",
-    "hasMore": true
-  }
+  "page": 1,
+  "pageSize": 20,
+  "total": 0
 }
 ```
 
-客户端不能解析游标并自行构造下一页。列表还要规定排序稳定性；只按时间排序可能出现并列，应增加唯一键作为第二排序条件。
+持续新增的消息流可使用游标：
 
-## 上传与导出不要伪装成普通 JSON
-
-文件上传要明确大小、MIME 类型、校验、存储时效和失败清理。大文件适合“申请上传凭证 → 直传存储 → 服务端确认”的三步模型，但上传凭证必须短期有效且限制对象路径和内容类型。
-
-耗时导出使用异步任务：
-
-```text
-POST /exports       → 202 + jobId
-GET  /exports/{id}  → queued / running / succeeded / failed
-GET  /exports/{id}/download → 短期下载地址
+```json
+{
+  "items": [],
+  "nextCursor": "opaque_cursor",
+  "hasMore": true
+}
 ```
 
-不要让浏览器长时间等待一个可能超时的请求，也不要让下载地址永久公开。
+`nextCursor` 是服务端生成的不透明字符串，客户端不要解析或自己拼。
 
-## 契约测试比“联调时看一下”可靠
+## 改字段时怎样兼容旧客户端
 
-至少建立四层验证：
-
-### 1. schema 测试
-
-验证必填字段、类型、格式、未知字段和空值。它能发现结构漂移，但发现不了语义错误。
-
-### 2. 提供者测试
-
-服务端对稳定用例返回约定的状态和错误码，包括权限、冲突和幂等重放。
-
-### 3. 消费者测试
-
-每个客户端用固定响应夹具验证：未知枚举、字段缺失、会话过期、网络超时和业务冲突不会导致白屏或重复提交。
-
-### 4. 跨端冒烟
-
-选择少量高价值流程，从不同客户端入口走到同一服务端结果，验证最终状态一致，而不是只比较页面文案。
+安全迁移分三步：
 
 ```text
-创建 → 查询 → 修改 → 冲突 → 重试 → 最终状态
+第一步：服务端同时支持旧字段和新字段
+第二步：各客户端逐步切到新字段，并观察旧字段调用量
+第三步：旧调用归零后，再删除旧字段
 ```
 
-## 新旧客户端共存的发布方法
+不要在同一次发布里同时“增加新字段、切换所有客户端、删除旧字段”。小程序审核或 H5 缓存一旦延迟，就会出现中间版本不可用。
 
-一个破坏性字段调整应拆成三次发布：
+## 一份简单的接口说明模板
 
-### 扩展阶段
+每个写接口至少写清：
 
-服务端接受旧字段并返回旧字段，同时增加新字段。记录旧字段调用量。
+```text
+用途：取消一条预约
+身份：需要登录，且只能操作当前业务范围内的数据
+输入：资源标识、取消原因、幂等键
+成功：返回最新状态
+业务失败：状态不允许、权限不足、版本冲突
+是否可重试：查询可重试；写入仅在幂等键不变时重试
+兼容期：新旧字段同时支持到约定日期
+```
 
-### 迁移阶段
+这比只列出字段名更有用，因为它写清了行为。
 
-客户端逐个切换到新字段。用客户端版本、渠道和请求量确认覆盖率，而不是凭发布时间猜测。
+## 测试清单
 
-### 收缩阶段
+- [ ] 成功响应和失败响应结构一致；
+- [ ] 401 并发时只恢复一次登录；
+- [ ] 同一个幂等键重复提交只产生一个结果；
+- [ ] 同键不同内容会返回冲突；
+- [ ] 未知状态不会让页面白屏；
+- [ ] 金额没有经过浮点运算；
+- [ ] 新服务端兼容旧客户端；
+- [ ] 回滚任一端后仍能读取已有数据；
+- [ ] 日志不记录凭证和完整个人信息。
 
-当兼容窗口结束且旧流量为零，再停止写旧字段，最后停止读旧字段。清理操作本身也要可回滚。
+## 最后记住
 
-如果客户端版本无法强制更新，契约就要长期容忍旧版本，或在服务端增加明确的最低版本响应，让客户端展示可理解的升级引导。
+API 契约的目标不是让所有客户端使用同一种技术，而是让它们对同一个结果有同一种理解。
 
-## 常见失败模式
-
-### 通过提示文字判断登录失效
-
-文案一改，客户端就无法重新登录。应使用 HTTP 401 和稳定错误码。
-
-### 每个 API 函数自行拼接公共参数
-
-租户、版本和凭证会漏传或优先级不一致。应由可信上下文与统一请求层处理。
-
-### 超时就自动重试所有请求
-
-写操作可能已经成功。只有幂等操作才能自动重试，否则先查询操作结果。
-
-### 为兼容旧端永久保留双写
-
-双写如果没有流量观测和删除日期，会成为新的永久复杂度。每个兼容分支都应有 owner 和退出条件。
-
-### 业务异常统一显示“系统错误”
-
-用户无法修正输入，监控也无法区分规则拒绝和程序故障。需要错误分类和字段级反馈。
-
-## 上线前检查清单
-
-### 契约定义
-
-- [ ] 输入、输出、错误、幂等和权限是否都写清楚？
-- [ ] 金额、时间、枚举、空值和分页是否无歧义？
-- [ ] 程序分支是否只依赖稳定字段与错误码？
-- [ ] 日志是否避免记录凭证、个人信息和完整请求体？
-
-### 客户端行为
-
-- [ ] 401 并发时是否只触发一次恢复流程？
-- [ ] 重复点击、超时和页面恢复是否不会重复写入？
-- [ ] 未知枚举和新增字段是否向前兼容？
-- [ ] 网络错误、业务错误和系统错误是否有不同交互？
-
-### 发布演进
-
-- [ ] 新旧客户端与新旧服务端的四种组合是否验证过？
-- [ ] 兼容逻辑是否有监控、负责人和删除条件？
-- [ ] 发布顺序是否允许中间状态长时间存在？
-- [ ] 任一端回滚后是否还能读取新产生的数据？
-
-## 结语
-
-跨端 API 的核心不是把所有客户端写成同一种技术，而是让它们对同一业务事实作出一致理解。身份在入口收敛，错误由稳定码表达，写操作默认幂等，金额和时间消除歧义，变化通过扩展—迁移—收缩逐步完成。
-
-契约一旦稳定，客户端可以各自采用适合运行时的交互和组件，服务端也能替换内部实现；双方共享的是语义，而不是彼此的代码结构。
+底层可以分别使用 Axios、`XMLHttpRequest` 和 `wx.request`；成功、失败、身份、幂等和字段语义必须统一。

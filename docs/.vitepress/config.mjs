@@ -39,25 +39,30 @@ export default defineConfig({
           text: '阅读地图',
           items: [
             { text: '系列导读', link: '/practice/' },
-            { text: '多端系统全景图', link: '/practice/full-stack-system-map' },
-            { text: '跨端 API 契约', link: '/practice/cross-client-api-contract' },
-            { text: '遗留系统渐进式治理', link: '/practice/legacy-modernization-roadmap' },
-            { text: '私有源码的公开写作', link: '/practice/public-writing-from-private-code' }
+            { text: '一次需求要改哪里', link: '/practice/full-stack-system-map' },
+            { text: 'PC、H5 与小程序 API', link: '/practice/cross-client-api-contract' },
+            { text: '旧系统渐进改造', link: '/practice/legacy-modernization-roadmap' }
           ]
         },
         {
           text: '服务端实践',
           items: [
-            { text: 'Yaf 多应用单体', link: '/practice/yaf-multi-app-architecture' },
-            { text: '高一致性业务工作流', link: '/practice/transactional-business-workflow' }
+            { text: 'Yaf 多应用整理', link: '/practice/yaf-multi-app-architecture' },
+            { text: '事务、幂等与补偿', link: '/practice/transactional-business-workflow' }
           ]
         },
         {
           text: '客户端实践',
           items: [
-            { text: 'Vue 2 多端工程治理', link: '/practice/vue2-multi-terminal-engineering' },
-            { text: '移动 H5 可靠性', link: '/practice/mobile-h5-reliability' },
-            { text: '原生小程序架构', link: '/practice/native-mini-program-architecture' }
+            { text: 'Vue 2 多端项目治理', link: '/practice/vue2-multi-terminal-engineering' },
+            { text: '移动 H5 会话与恢复', link: '/practice/mobile-h5-reliability' },
+            { text: '原生小程序分层', link: '/practice/native-mini-program-architecture' }
+          ]
+        },
+        {
+          text: '写作附录',
+          items: [
+            { text: '私有项目公开写作', link: '/practice/public-writing-from-private-code' }
           ]
         }
       ],

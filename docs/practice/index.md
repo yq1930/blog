@@ -1,48 +1,74 @@
 ---
 title: 真实工程实践
-description: 从多应用服务端、PC 管理端、移动 H5 与原生小程序中抽取的可复用工程方法。
+description: 从 PHP/Yaf、Vue 2、移动 H5 和微信小程序项目中整理出的简单、可复用开发经验。
 ---
 
 # 真实工程实践
 
-这一组文章来自一套长期演进的多端业务系统：服务端承担多个应用入口，客户端同时包含 PC 管理端、移动 H5 和原生小程序。系列不复述具体项目，也不展示私有源码，而是回答更值得复用的问题：边界怎么划、契约怎么稳、故障怎么兜底，以及旧系统怎样在持续交付中逐步变好。
+这一组文章来自一套长期维护的多端系统：一个 PHP/Yaf 服务端，同时支撑 PC 管理后台、移动 H5 和微信小程序。
 
-> 所有示例中的名称、路径、接口、数据结构和业务数值均为重新设计的演示内容。它们用于解释方法，不对应任何真实系统实现。
+文章不会按源码目录逐个介绍，而是挑开发中反复出现的问题，用短流程图、简化项目代码和检查清单讲清楚。
 
-## 建议阅读顺序
+> 代码保留了真实项目中的工程模式，但已经删除生产地址、凭据、客户数据、内部业务名称和特殊常量。
 
-### 先建立全局视角
+## 第一次来，建议这样读
 
-1. [多端业务系统全景图](/practice/full-stack-system-map)：不用“仓库清单”描述系统，而是用能力、请求、身份、数据和发布五张图建立共同语言。
-2. [跨端 API 契约设计](/practice/cross-client-api-contract)：让 PC、H5、小程序和服务端对成功、失败、身份、幂等与兼容性形成一致约定。
-3. [遗留系统渐进式治理路线](/practice/legacy-modernization-roadmap)：不做高风险推倒重来，先收拢变化点，再替换内部实现。
-4. [从私有源码提炼公开文章](/practice/public-writing-from-private-code)：建立证据、抽象、示例重写和发布扫描流程，让经验可分享而实现不外泄。
+1. [一次需求到底要改哪里](/practice/full-stack-system-map)：先看懂多端系统的完整请求链。
+2. [PC、H5 和小程序怎样统一 API](/practice/cross-client-api-contract)：统一成功、失败、登录与重复提交。
+3. [旧系统怎样一步步改](/practice/legacy-modernization-roadmap)：不停止业务，也不做高风险推倒重来。
 
-### 再深入服务端
+这三篇建立整体视角，后面的文章可以按当前问题直接选择。
 
-- [Yaf 多应用单体的边界与治理](/practice/yaf-multi-app-architecture)：入口、模块、共享模型、基础库和外部集成怎样分工。
-- [高一致性业务工作流](/practice/transactional-business-workflow)：事务、幂等、并发、第三方副作用、补偿和审计如何组合。
+## 服务端开发
 
-### 最后看客户端
+### [Yaf 多应用项目怎样整理](/practice/yaf-multi-app-architecture)
 
-- [Vue 2 多端工程治理](/practice/vue2-multi-terminal-engineering)：PC 与移动端共存时如何管理路由、状态、组件库、构建和迁移。
-- [移动 H5 可靠性](/practice/mobile-h5-reliability)：容器生命周期、登录态、重复提交、弱网和外部能力如何防守。
-- [原生微信小程序架构](/practice/native-mini-program-architecture)：页面、组件、请求、会话、分包和性能的稳定组织方式。
+适合遇到多个入口、多个应用目录、共享模型和公共库的 PHP 项目。重点说明入口、控制器、业务服务、配置和共享代码各自负责什么。
 
-## 这套系列解决什么
+### [事务、幂等和补偿怎么配合](/practice/transactional-business-workflow)
 
-| 常见困境 | 对应方法 |
+适合订单、库存、支付、预约等不能重复执行的写操作。用白话解释数据库事务、重复请求、外部调用超时和失败恢复。
+
+## 前端与小程序
+
+### [Vue 2 多端项目怎样继续维护](/practice/vue2-multi-terminal-engineering)
+
+对比 PC 后台和移动 H5 的路由、请求层、Vuex 与组件库使用方式，给出不用一次重写的整理方法。
+
+### [微信内 H5 为什么总有“偶现问题”](/practice/mobile-h5-reliability)
+
+说明登录回跳、页面恢复、弱网、重复点击和宿主 SDK 为什么容易互相影响，以及怎样用简单状态机解决。
+
+### [原生小程序怎样组织才不乱](/practice/native-mini-program-architecture)
+
+从 `App`、`Page`、`Component`、`request` 和 `session` 开始，讲清登录、授权、分包、性能和联调。
+
+## 分享经验但不泄露项目
+
+### [私有项目怎么写成公开技术文章](/practice/public-writing-from-private-code)
+
+介绍怎样挑选代码、重写示例、合成数据、扫描构建产物，并区分“项目现状”和“推荐方案”。
+
+## 按问题快速选择
+
+| 你现在遇到的问题 | 建议阅读 |
 | --- | --- |
-| 仓库很多，但没人能说清一次需求会改到哪里 | 建立能力地图和垂直切片清单 |
-| 多端各自解释接口，错误处理越来越分裂 | 把协议、业务结果和交互策略分层 |
-| 核心流程既写数据库又调用第三方，失败后难恢复 | 本地事务配合幂等、状态机、发件箱与补偿 |
-| Vue 2 与旧构建链升级风险高 | 先统一边缘层，再按业务切片迁移 |
-| 小程序页面重复请求、登录和弹窗逻辑 | 把运行时能力封装成稳定适配层 |
-| 文档很快过时 | 让契约测试、依赖规则和发布检查替文档守边界 |
-| 想分享工程经验，又担心泄露项目实现 | 分离内部证据底稿与公开知识正文 |
+| 一个需求不知道会影响哪些仓库 | [多端系统全景图](/practice/full-stack-system-map) |
+| 三个客户端对同一接口判断不一样 | [跨端 API 契约](/practice/cross-client-api-contract) |
+| Yaf 控制器和公共库越来越大 | [Yaf 多应用架构](/practice/yaf-multi-app-architecture) |
+| 写操作偶尔重复或状态不一致 | [高一致性业务工作流](/practice/transactional-business-workflow) |
+| Vue 2 路由、全局方法和 UI 库混在一起 | [Vue 2 多端工程治理](/practice/vue2-multi-terminal-engineering) |
+| H5 登录后回不来或重复弹窗 | [移动 H5 可靠性](/practice/mobile-h5-reliability) |
+| 小程序登录、定位和页面生命周期互相打架 | [原生小程序架构](/practice/native-mini-program-architecture) |
+| 想升级旧技术栈又担心风险 | [渐进式治理路线](/practice/legacy-modernization-roadmap) |
+| 想分享项目经验但担心泄密 | [私有源码公开写作](/practice/public-writing-from-private-code) |
 
-## 阅读时的三个约定
+## 每篇文章都遵守的写法
 
-第一，文章优先讨论“为什么这样分”，而不是把某个目录结构当成唯一答案。第二，示例刻意保持小而完整，真实项目需要再加入权限、审计、监控和迁移策略。第三，任何重构都应从可观测、可回滚的小改动开始，不能以停止业务交付为代价。
+- 先说明问题，不先堆术语；
+- 一次只解释一条主流程；
+- 代码片段尽量短，并说明它解决什么；
+- 同时写成功路径和失败路径；
+- 最后给出可以直接复制的检查清单。
 
-如果只准备读一篇，从[多端业务系统全景图](/practice/full-stack-system-map)开始；如果正处理资金、库存或支付一类高风险流程，直接进入[高一致性业务工作流](/practice/transactional-business-workflow)。
+如果只准备读一篇，从[一次需求到底要改哪里](/practice/full-stack-system-map)开始。
