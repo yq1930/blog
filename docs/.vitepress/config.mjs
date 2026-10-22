@@ -45,6 +45,17 @@ export default defineConfig({
           ]
         },
         {
+          text: '笔记应用开发',
+          items: [
+            { text: '从编辑器到可靠保存', link: '/practice/notes-architecture' },
+            { text: '编辑会话与本地草稿', link: '/practice/notes-save-lifecycle' },
+            { text: '快照同步与并发冲突', link: '/practice/notes-sync-consistency' },
+            { text: '富文本与附件生命周期', link: '/practice/notes-rich-text-assets' },
+            { text: 'AI 编辑的可靠性边界', link: '/practice/notes-ai-editing' },
+            { text: '懒加载与发布恢复', link: '/practice/notes-release-recovery' }
+          ]
+        },
+        {
           text: '服务端实践',
           items: [
             { text: 'Yaf 多应用整理', link: '/practice/yaf-multi-app-architecture' },

@@ -67,9 +67,9 @@
         <div class="shelf-grid">
           <a class="shelf-card shelf-card--practice" href="/practice/">
             <span class="shelf-card__mark">FIELD NOTES</span>
-            <span class="shelf-card__meta">9 篇 · 跨端系统与可靠性</span>
+            <span class="shelf-card__meta">15 篇 · 笔记应用与多端实践</span>
             <h3>真实工程实践</h3>
-            <p>从一个多应用服务端、PC 管理端、移动 H5 与小程序共存的系统中，提炼边界、契约、事务和渐进式治理方法。</p>
+            <p>从 Vue 3 笔记应用到多端业务系统，整理编辑保存、同步冲突、富文本、AI 与发布恢复的开发经验。</p>
             <span class="shelf-card__link">进入实践系列 <i aria-hidden="true">→</i></span>
             <span class="practice-route" aria-hidden="true">
               <span class="practice-route__clients">
@@ -126,6 +126,11 @@
           <p>每篇文章都先明确判断边界，再给出可以复用的实现方式和检查清单。</p>
         </div>
         <div class="recent-list">
+          <a href="/practice/notes-architecture">
+            <span>笔记应用</span>
+            <strong>编辑器、草稿与服务端怎样配合，才能可靠保存？</strong>
+            <i aria-hidden="true">↗</i>
+          </a>
           <a href="/practice/full-stack-system-map">
             <span>系统全景</span>
             <strong>一个需求会同时影响哪些端和哪些边界？</strong>

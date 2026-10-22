@@ -1,11 +1,11 @@
 ---
 title: 真实工程实践
-description: 从 PHP/Yaf、Vue 2、移动 H5 和微信小程序项目中整理出的简单、可复用开发经验。
+description: 从 Vue 3 笔记应用、Express 服务端，以及 PHP/Yaf、Vue 2、移动 H5 和微信小程序项目中整理出的可复用开发经验。
 ---
 
 # 真实工程实践
 
-这一组文章来自一套长期维护的多端系统：一个 PHP/Yaf 服务端，同时支撑 PC 管理后台、移动 H5 和微信小程序。
+这里收录两组真实项目经验：一组来自 Vue 3、Express 与 MySQL 构建的笔记应用；另一组来自 PHP/Yaf 服务端支撑 PC 管理后台、移动 H5 和微信小程序的多端系统。
 
 文章不会按源码目录逐个介绍，而是挑开发中反复出现的问题，用短流程图、简化项目代码和检查清单讲清楚。
 
@@ -13,11 +13,28 @@ description: 从 PHP/Yaf、Vue 2、移动 H5 和微信小程序项目中整理�
 
 ## 第一次来，建议这样读
 
+如果你正在做 Vue 3 编辑器、知识库或个人工具，从[笔记应用：从编辑器到可靠保存](/practice/notes-architecture)开始。
+
+如果你在维护多端业务系统，可以按下面的顺序阅读：
+
 1. [一次需求到底要改哪里](/practice/full-stack-system-map)：先看懂多端系统的完整请求链。
 2. [PC、H5 和小程序怎样统一 API](/practice/cross-client-api-contract)：统一成功、失败、登录与重复提交。
 3. [旧系统怎样一步步改](/practice/legacy-modernization-roadmap)：不停止业务，也不做高风险推倒重来。
 
 这三篇建立整体视角，后面的文章可以按当前问题直接选择。
+
+## 笔记应用：Vue 3 与 Express 全栈实践
+
+这一组围绕“用户写下的内容怎样可靠保存”展开，取材于 PC 客户端、共享数据层和独立服务端的实际实现。已实现的行为、设计取舍和后续建议分别说明。
+
+| 文章 | 解决的问题 |
+| --- | --- |
+| [从编辑器到可靠保存](/practice/notes-architecture) | 共享数据层、页面状态、编辑会话与服务端各自负责什么 |
+| [编辑会话与本地草稿](/practice/notes-save-lifecycle) | 保存期间继续输入、切换文档、恢复草稿和账号隔离 |
+| [快照同步与并发冲突](/practice/notes-sync-consistency) | 多窗口覆盖、目录移动、旧快照复活已删除内容 |
+| [富文本与附件生命周期](/practice/notes-rich-text-assets) | Markdown 粘贴、HTML 存储、自定义节点和私有附件 |
+| [AI 编辑的可靠性边界](/practice/notes-ai-editing) | 长任务取消、容量单位、完整输出和预览采纳 |
+| [懒加载与发布恢复](/practice/notes-release-recovery) | 旧标签页请求不到页面资源，以及保护编辑内容的恢复流程 |
 
 ## 服务端开发
 
@@ -53,6 +70,10 @@ description: 从 PHP/Yaf、Vue 2、移动 H5 和微信小程序项目中整理�
 
 | 你现在遇到的问题 | 建议阅读 |
 | --- | --- |
+| 保存成功后，请求期间的新输入却丢了 | [编辑会话与本地草稿](/practice/notes-save-lifecycle) |
+| 多设备互相覆盖，删除内容又被同步回来 | [快照同步与并发冲突](/practice/notes-sync-consistency) |
+| AI 生成后怎样安全采纳并保存 | [AI 编辑的可靠性边界](/practice/notes-ai-editing) |
+| 发布后，已打开的页面无法切换路由 | [懒加载与发布恢复](/practice/notes-release-recovery) |
 | 一个需求不知道会影响哪些仓库 | [多端系统全景图](/practice/full-stack-system-map) |
 | 三个客户端对同一接口判断不一样 | [跨端 API 契约](/practice/cross-client-api-contract) |
 | Yaf 控制器和公共库越来越大 | [Yaf 多应用架构](/practice/yaf-multi-app-architecture) |
