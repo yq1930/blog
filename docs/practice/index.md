@@ -38,6 +38,10 @@ description: 从 Vue 3 笔记应用、Express 服务端，以及 PHP/Yaf、Vue 2
 
 ## 服务端开发
 
+### [PHP 9.2 分漏洞怎么处理](/practice/php-critical-vulnerability-response)
+
+根据 PHP2Shell 官方公告和 Windows/Yaf 项目的静态检查，说明运行时盘点、临时缓解、补丁回补和兼容迁移的边界，并给出验证与回滚顺序。
+
 ### [Yaf 多应用项目怎样整理](/practice/yaf-multi-app-architecture)
 
 适合遇到多个入口、多个应用目录、共享模型和公共库的 PHP 项目。重点说明入口、控制器、业务服务、配置和共享代码各自负责什么。
@@ -77,6 +81,7 @@ description: 从 Vue 3 笔记应用、Express 服务端，以及 PHP/Yaf、Vue 2
 | 一个需求不知道会影响哪些仓库 | [多端系统全景图](/practice/full-stack-system-map) |
 | 三个客户端对同一接口判断不一样 | [跨端 API 契约](/practice/cross-client-api-contract) |
 | Yaf 控制器和公共库越来越大 | [Yaf 多应用架构](/practice/yaf-multi-app-architecture) |
+| PHP 爆出严重漏洞，旧项目又不能直接升级 | [PHP 漏洞处置与升级](/practice/php-critical-vulnerability-response) |
 | 写操作偶尔重复或状态不一致 | [高一致性业务工作流](/practice/transactional-business-workflow) |
 | Vue 2 路由、全局方法和 UI 库混在一起 | [Vue 2 多端工程治理](/practice/vue2-multi-terminal-engineering) |
 | H5 登录后回不来或重复弹窗 | [移动 H5 可靠性](/practice/mobile-h5-reliability) |
