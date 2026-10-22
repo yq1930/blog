@@ -67,7 +67,7 @@
         <div class="shelf-grid">
           <a class="shelf-card shelf-card--practice" href="/practice/">
             <span class="shelf-card__mark">FIELD NOTES</span>
-            <span class="shelf-card__meta">15 篇 · 笔记应用与多端实践</span>
+            <span class="shelf-card__meta">16 篇 · 笔记应用与多端实践</span>
             <h3>真实工程实践</h3>
             <p>从 Vue 3 笔记应用到多端业务系统，整理编辑保存、同步冲突、富文本、AI 与发布恢复的开发经验。</p>
             <span class="shelf-card__link">进入实践系列 <i aria-hidden="true">→</i></span>
@@ -126,6 +126,11 @@
           <p>每篇文章都先明确判断边界，再给出可以复用的实现方式和检查清单。</p>
         </div>
         <div class="recent-list">
+          <a href="/practice/php-critical-vulnerability-response">
+            <span>安全处置</span>
+            <strong>PHP 严重漏洞出现后，旧项目怎样排查、修补和升级？</strong>
+            <i aria-hidden="true">↗</i>
+          </a>
           <a href="/practice/notes-architecture">
             <span>笔记应用</span>
             <strong>编辑器、草稿与服务端怎样配合，才能可靠保存？</strong>

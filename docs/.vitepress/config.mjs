@@ -59,6 +59,7 @@ export default defineConfig({
           text: '服务端实践',
           items: [
             { text: 'Yaf 多应用整理', link: '/practice/yaf-multi-app-architecture' },
+            { text: 'PHP 严重漏洞处置与升级', link: '/practice/php-critical-vulnerability-response' },
             { text: '事务、幂等与补偿', link: '/practice/transactional-business-workflow' }
           ]
         },
