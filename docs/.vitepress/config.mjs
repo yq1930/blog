@@ -187,6 +187,7 @@ export default defineConfig({
           text: '后端全景',
           items: [
             { text: '后端服务如何组织', link: '/backend/overview' },
+            { text: '如何学习 PHP：从 0 到 1 做一个项目', link: '/backend/php-from-zero' },
             { text: 'REST API 设计', link: '/backend/restful' },
             { text: 'API 版本管理', link: '/backend/api-versioning' },
             { text: '认证、授权与会话', link: '/backend/authentication' },

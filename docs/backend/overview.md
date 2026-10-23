@@ -145,3 +145,4 @@ function parseCreateOrder(body) {
 - [REST API 设计](/backend/restful)：接口层怎么设计
 - [服务边界与业务编排](/backend/service-design)：业务服务内部怎么组织
 - [认证、授权与会话](/backend/authentication)：身份和权限的细节
+- [如何学习 PHP：从 0 到 1 做一个项目](/backend/php-from-zero)：用 PHP 亲手把这些层搭一遍
