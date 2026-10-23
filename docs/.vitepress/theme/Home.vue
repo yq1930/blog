@@ -2,7 +2,7 @@
   <div class="field-home">
     <header class="field-nav">
       <a class="field-brand" href="/" aria-label="返回野塘漫水首页">
-        <img src="/icon/avatar.png" alt="" width="36" height="36" />
+        <img src="/icon/avatar-20261023.png" alt="" width="36" height="36" />
         <span>野塘漫水</span>
       </a>
       <nav aria-label="主导航">

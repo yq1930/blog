@@ -9,10 +9,10 @@ export default defineConfig({
   lastUpdated: true,
   head: [
     ['meta', { name: 'theme-color', content: '#123642' }],
-    ['link', { rel: 'icon', href: '/icon/avatar.png' }]
+    ['link', { rel: 'icon', href: '/icon/avatar-20261023.png' }]
   ],
   themeConfig: {
-    logo: '/icon/avatar.png',
+    logo: '/icon/avatar-20261023.png',
     siteTitle: '野塘漫水',
     outline: {
       level: [2, 3],
