@@ -230,7 +230,7 @@ export default defineConfig({
         {
           text: '基础理论',
           items: [
-            { text: 'LLM 应用基础', link: '/ai/llm-basics' },
+            { text: 'LLM 基础与 Agent 开发', link: '/ai/llm-basics' },
             { text: 'Prompt 工程实践', link: '/ai/prompt-engineering' },
             { text: '多模态应用入门', link: '/ai/multimodal' }
           ]
