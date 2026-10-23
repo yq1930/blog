@@ -50,7 +50,7 @@ body { background: var(--field-paper); }
 .field-home { min-height: 100vh; color: var(--field-ink); background-color: var(--field-paper); background-image: linear-gradient(rgba(24, 51, 61, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(24, 51, 61, 0.035) 1px, transparent 1px); background-size: 28px 28px; }
 .field-nav { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; width: min(1180px, calc(100% - 48px)); height: 76px; margin: 0 auto; border-bottom: 1px solid rgba(24, 51, 61, 0.2); }
 .field-brand { display: inline-flex; gap: 11px; align-items: center; color: var(--field-deep); font-family: "Songti SC", STSong, serif; font-size: 18px; font-weight: 700; letter-spacing: 0.08em; text-decoration: none; }
-.field-brand img { border: 2px solid var(--field-deep); border-radius: 50%; object-fit: cover; }
+.field-brand img { border-radius: 50%; object-fit: cover; }
 .field-nav nav { display: flex; gap: 26px; align-items: center; }
 .field-nav nav a { color: #3f565c; font-size: 13px; font-weight: 650; text-decoration: none; }
 .field-nav nav a:hover { color: var(--field-tide); }
