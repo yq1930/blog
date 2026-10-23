@@ -1,57 +1,153 @@
 ---
 title: 构建工具选型
-description: 搞清楚 Vite、Webpack、Rollup 各自擅长什么，而不是看哪个火就用哪个。
+description: 讲清构建工具做了什么、开发环境和生产环境为什么表现不同，修复部署到子路径白屏、环境变量取不到或泄露密钥、发布后用户还在用旧版、Mac 上能编译而 CI 上报找不到文件等问题。
 ---
 
 # 构建工具选型
 
-前端构建工具不是"选最火的"，而是"选最匹配项目场景的"。Vite 快、Webpack 生态成熟、Rollup 产物干净——它们解决的核心问题都是把模块化的源码打包成浏览器能用的产物，但路径和取舍完全不同。本篇讲构建工具在做什么、各自的特点，以及何时需要自定义构建。
+构建工具平时安静地待在后台，一出问题却很要命：
 
-## 构建工具在做什么
+- 本地开发一切正常，打包部署后页面白屏，控制台一排 404；
+- `process.env.API_URL` 在 Vite 项目里报 `process is not defined`；
+- 发布了新版本，用户刷新了好几次还是旧页面；
+- 在自己的 Mac 上构建成功，到了 CI 上报“找不到模块”。
 
-浏览器原生不支持 `import` 大量零散文件（性能差）、不支持 JSX/TS/Vue 单文件组件、不会压缩代码、不理解 tree-shaking。构建工具的工作就是把这些"开发态"的东西转换成"运行态"的产物：
+这些问题都和“构建工具到底做了什么”有关。这篇先讲原理，再讲选型，最后逐个修坑。
+
+::: tip 读完这篇你会
+- 说清构建工具的工作，以及开发环境和生产环境的差别
+- 根据项目类型选择 Vite、Webpack 或 Rollup
+- 修复部署路径、环境变量、缓存、文件名大小写等常见构建问题
+:::
+
+## 1. 原理：构建工具把“开发用的代码”变成“浏览器用的代码”
+
+你写的代码浏览器并不能直接高效地运行：有 TypeScript、Vue 单文件组件、Sass，还有成百上千个小模块。构建工具要做这些事：
 
 | 工作 | 说明 |
 | --- | --- |
-| 模块打包 | 把多个文件合并成少量产物，减少请求数 |
-| 转译 | JSX、TypeScript、新语法 → 浏览器能运行的 JS |
-| CSS 处理 | Sass/Less → CSS、加前缀、提取到单独文件 |
-| 资源处理 | 图片、字体转成合适的引用方式 |
-| 代码压缩 | 移除空白、缩短变量名，减小体积 |
-| Tree-shaking | 移除未使用的代码 |
-| HMR | 开发时改代码热更新，不刷新整页 |
+| 转译 | TypeScript、JSX、`.vue` 文件、新语法 → 浏览器能运行的 JS |
+| 打包 | 把大量小模块合并成少量文件，减少请求 |
+| 拆分 | 按路由、按需把代码切成多个块，首屏只加载需要的 |
+| 优化 | 压缩代码、删除没用到的代码（tree-shaking） |
+| 资源处理 | 图片、字体、CSS 的处理与引用 |
+| 文件指纹 | 输出 `index.3f9a1c.js` 这样带内容哈希的文件名，方便长期缓存 |
 
-```text
-源码（模块化、TS、JSX、Sass）
-        ↓ 构建工具
-产物（压缩后的 JS/CSS/HTML，浏览器可直接运行）
-```
+### 开发和生产是两套不同的流程
 
-## 三种主流工具的特点
+以 Vite 为例：
 
-| 工具 | 开发体验 | 产物质量 | 生态 | 强项 |
-| --- | --- | --- | --- | --- |
-| Vite | 极快（ESM 原生加载） | 好（生产用 Rollup） | 成长中，主流库都支持 | 开发服务器快、配置简单 |
-| Webpack | 中等（需优化） | 可控（配置灵活） | 最成熟，插件最多 | 大型应用、复杂定制 |
-| Rollup | 慢（不做 dev server） | 最干净 | 中等 | 打包库、SDK |
+- **开发时**：不打包。浏览器请求哪个模块，Vite 就现场转译哪个，利用浏览器原生的 ES Module 加载。改一个文件只需重新处理这一个文件，所以启动和热更新都很快。
+- **生产构建时**：完整打包、拆分、压缩、加哈希，产出一套静态文件。
 
-### Vite：开发快是核心优势
+打个比方：开发环境像餐厅现点现做，你点哪道菜就做哪道；生产环境像中央厨房提前做好、分装好的套餐。两者用的食材一样，但流程完全不同。**很多“开发环境好好的，上线就坏了”的问题，根源都在这个差别上**。所以发布前一定要在本地用 `vite build && vite preview` 跑一次生产版本。
 
-Vite 的开发服务器利用浏览器原生 ESM——不打包，按需编译请求的模块，所以启动几乎是即时的，项目多大都不会慢。生产构建用 Rollup，产物质量好。
+## 2. 选哪个工具
+
+| 工具 | 特点 | 适合 |
+| --- | --- | --- |
+| **Vite** | 开发服务器启动快、配置简单；生产构建使用 Rollup 系打包器（新版本逐步切换到 Rust 编写的 Rolldown） | 新的应用项目，Vue / React 都适用 |
+| **Webpack** | 生态最成熟，插件最多，配置灵活但复杂 | 已有的 Webpack 项目、需要特殊插件的大型应用 |
+| **Rollup** | 产物干净，支持输出多种模块格式 | 开发 npm 包、组件库、SDK |
+| **esbuild / Rspack 等** | 用 Go、Rust 编写，速度很快 | 作为其他工具的底层，或替换 Webpack 加速构建 |
+
+大多数情况下，用框架官方脚手架生成的默认配置就够了。如果你发现自己在维护几百行的构建配置，先停下来想想是不是工具选错了，或者是不是在解决一个本不该存在的问题。
+
+不要为了“用新工具”而迁移。从 Webpack 迁到 Vite 的收益（开发速度）要明确大于成本（插件替换、配置改写、回归测试）。
+
+## 3. 坑一：部署到子路径后白屏，资源全部 404
+
+**现象**：项目部署在 `https://example.com/admin/` 下，打开后白屏，Network 面板里 `https://example.com/assets/index.js` 全部 404。
+
+**原因**：构建工具默认假设应用部署在网站根路径 `/`，生成的资源地址都是 `/assets/...`，没有带上 `/admin/` 前缀。
+
+**修复**：配置部署的基础路径，路由也要使用同一个前缀：
 
 ```js
 // vite.config.js
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-
 export default defineConfig({
-  plugins: [vue()],
+  base: '/admin/'
+})
+```
+
+```js
+// router
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL), // 与 base 保持一致
+  routes
+})
+```
+
+代码里引用 `public` 目录的资源时，也要拼上 `import.meta.env.BASE_URL`，而不是写死以 `/` 开头的路径。
+
+## 4. 坑二：环境变量取不到，或者把密钥打包进了前端
+
+**现象一**：在 Vite 项目里写 `process.env.API_URL`，浏览器报 `process is not defined`；改成 `import.meta.env.API_URL`，拿到的是 `undefined`。
+
+**原因**：`process.env` 是 Node.js 的东西，浏览器里没有。Vite 通过 `import.meta.env` 暴露环境变量，并且**只暴露以 `VITE_` 开头的变量**，防止你不小心把服务器的变量带进前端。
+
+**修复**：
+
+```text
+# .env.production
+VITE_API_BASE=https://api.example.com
+```
+
+```js
+const baseURL = import.meta.env.VITE_API_BASE
+```
+
+**现象二**：安全扫描发现，前端的 JS 文件里有第三方服务的密钥。
+
+**原因**：有人把密钥写进了 `VITE_` 开头的环境变量。构建时，这些变量会被**直接替换成字符串写进 JS 文件**，任何人打开浏览器开发者工具都能看到。
+
+**修复**：前端代码里**不能放任何密钥**。需要用密钥调用的服务，由后端代理：前端请求自己的后端，后端带上密钥去调用第三方。已经泄露的密钥要立即作废、重新生成。
+
+## 5. 坑三：发布了新版本，用户看到的还是旧页面
+
+**现象**：发布后，部分用户反馈还是旧界面；还有用户点击某个菜单时页面报错，刷新后又好了。
+
+**原因**：浏览器缓存了旧的 `index.html`。旧的 HTML 引用的是旧的 JS 文件，如果服务器上旧文件还在，用户看到旧版本；如果旧文件已经被删除，懒加载某个页面时就会 404。
+
+**修复**：给不同的文件设置不同的缓存策略：
+
+| 文件 | 缓存策略 | 原因 |
+| --- | --- | --- |
+| `index.html` | `Cache-Control: no-cache`（每次都向服务器确认） | 它是入口，必须及时拿到新版本 |
+| 带哈希的 `assets/*.js`、`*.css` | `Cache-Control: max-age=31536000, immutable` | 内容变了文件名就会变，可以放心长期缓存 |
+
+发布时保留上一个版本的资源文件一段时间，让还开着旧页面的用户也能继续加载。懒加载失败后的自动恢复，见 [懒加载与发布恢复](/practice/notes-release-recovery)。
+
+## 6. 坑四：Mac 上构建成功，CI 上报“找不到模块”
+
+**现象**：本地开发和构建都正常，推送代码后，Linux 上的 CI 构建失败：`Could not resolve "./components/UserCard.vue"`。
+
+**原因**：文件实际名叫 `userCard.vue`，导入语句写的是 `UserCard.vue`。macOS 和 Windows 的文件系统默认**不区分大小写**，所以本地能找到；Linux 区分大小写，就找不到了。
+
+另一种常见情况是：在 Mac 上把文件名从 `usercard.vue` 改成 `UserCard.vue`，Git 默认没有记录这次改名，仓库里还是旧名字。
+
+**修复**：
+
+- 统一文件命名规范，并开启编辑器的导入路径自动补全，不手写路径；
+- 改文件名大小写时用 `git mv usercard.vue UserCard.vue`；
+- 让 CI 在 Linux 上构建，尽早暴露这类问题。
+
+## 7. 坑五：第三方依赖打成一个巨大的包
+
+**现象**：每次发布，用户都要重新下载一个 1MB 的 `vendor.js`，哪怕只改了一行业务代码。
+
+**原因**：所有第三方依赖被合并成一个文件。只要依赖有任何变化（甚至只是升级一个小工具包），整个文件的哈希就会变，缓存全部失效。
+
+**修复**：按“变化频率”拆分。很少变化的框架核心单独一个块，可以长期缓存；大型但只在部分页面使用的库，跟着页面懒加载：
+
+```js
+// vite.config.js
+export default defineConfig({
   build: {
-    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['vue', 'vue-router']
+          framework: ['vue', 'vue-router', 'pinia'] // 很少变化，单独缓存
         }
       }
     }
@@ -59,122 +155,28 @@ export default defineConfig({
 })
 ```
 
-适合：新项目、中小型应用、对开发体验敏感的团队。
+拆得太碎也不好，请求数会变多。用体积分析工具看清楚构成后再决定。
 
-### Webpack：生态最成熟
+## 排查思路
 
-Webpack 配置复杂，但它的插件生态最完整，几乎能处理任何场景。大型企业应用、需要复杂定制的场景，Webpack 仍然是稳妥选择。
+1. **在本地复现生产环境**：`vite build && vite preview`（Webpack 项目同理，构建后用静态服务器打开 `dist`）。大部分“只在线上出问题”的情况都能在这一步复现。
+2. **看 Network 面板的 404**：资源的请求地址错在哪里——是少了路径前缀，还是请求了旧版本的文件名。
+3. **开发环境出现奇怪的依赖报错**（尤其是刚升级或安装依赖后）：Vite 会预构建依赖并缓存，删除 `node_modules/.vite` 或用 `vite --force` 启动，强制重新预构建。
+4. **体积问题**：用 `rollup-plugin-visualizer` 等工具生成体积报告，先处理最大的几块。
+5. **CI 失败而本地成功**：对比 Node 版本、包管理器版本、锁文件是否提交，以及文件名大小写。
 
-```js
-// webpack.config.js
-module.exports = {
-  entry: './src/index.js',
-  output: { filename: '[name].[contenthash].js', path: 'dist' },
-  module: {
-    rules: [
-      { test: /\.js$/, use: 'babel-loader' },
-      { test: /\.css$/, use: ['style-loader', 'css-loader'] }
-    ]
-  },
-  plugins: [new HtmlWebpackPlugin({ template: './index.html' })]
-}
-```
+## 检查清单
 
-适合：已有 Webpack 项目、需要特殊插件（Webpack 都有）、大型应用。
+- [ ] 发布前在本地运行过生产构建和预览
+- [ ] 部署在子路径时配置了 `base`，路由使用相同前缀
+- [ ] 前端环境变量里没有任何密钥
+- [ ] `index.html` 不长期缓存，带哈希的资源长期缓存
+- [ ] 文件名大小写和导入路径一致，CI 在 Linux 上构建
+- [ ] 依赖拆分考虑了缓存，定期检查产物体积
+- [ ] 锁文件已提交，CI 与本地使用相同的 Node 和包管理器版本
 
-### Rollup：库的首选
+## 延伸阅读
 
-Rollup 的 tree-shaking 最干净，产物体积小、格式灵活（ESM/CJS/UMD），适合打包给别的项目用的库：
-
-```js
-// rollup.config.js
-export default {
-  input: 'src/index.js',
-  output: [
-    { file: 'dist/bundle.cjs.js', format: 'cjs' },
-    { file: 'dist/bundle.esm.js', format: 'esm' }
-  ],
-  external: ['react'],  // 不打包 peer 依赖
-  plugins: [/* ... */]
-}
-```
-
-适合：npm 包、组件库、SDK。不适合做应用（没有 dev server）。
-
-## 开发体验：HMR 是关键
-
-开发时改一行代码，希望页面只更新变化的部分，不整页刷新。这就是 HMR（Hot Module Replacement）。
-
-| 工具 | HMR 速度 | 机制 |
-| --- | --- | --- |
-| Vite | 极快 | 改哪个模块就重新请求哪个，浏览器原生 ESM |
-| Webpack | 快（需配置） | 重新编译受影响的 chunk |
-| Turbopack | 极快（Rust 实现） | Next.js 生态 |
-
-Vite 的 HMR 几乎是即时的，因为它不打包——开发态下每个模块是一个独立请求，改动只重新编译那一个文件。Webpack 需要重新构建受影响的模块依赖图。
-
-## 生产优化
-
-构建工具的生产配置决定了最终用户的加载速度：
-
-| 优化 | 做法 | 工具配置 |
-| --- | --- | --- |
-| 代码分割 | 按路由/动态 import 拆 chunk | `SplitChunksPlugin` / `manualChunks` |
-| Tree-shaking | 移除未使用代码 | 生产模式自动启用 |
-| 压缩 | JS/CSS/HTML 压缩 | `TerserPlugin` / `esbuild` |
-| 资源指纹 | 文件名加 hash，利于缓存 | `[name].[contenthash].js` |
-| 懒加载 | 路由和重组件动态 import | `import('./lazy.js')` |
-
-```js
-// 动态 import：按需加载，不进主 bundle
-const LazyModule = () => import('./LazyComponent.vue')
-```
-
-```js
-// 分离第三方依赖，长期缓存
-build: {
-  rollupOptions: {
-    output: {
-      manualChunks: {
-        vendor: ['vue', 'vue-router', 'pinia'],
-        ui: ['some-ui-lib']
-      }
-    }
-  }
-}
-```
-
-## 何时需要自定义构建
-
-大多数项目用框架脚手架的默认配置就够了（`create-vite`、`create-next-app`、Vue CLI）。需要自定义的信号：
-
-| 信号 | 说明 |
-| --- | --- |
-| 多入口/多页面 | 默认单入口配置不够 |
-| 特殊资源处理 | 如 WebGL shader、特殊字体 |
-| 微前端 | 多个子应用独立构建再组合 |
-| 库开发 | 需要输出多种格式 |
-| 复杂环境变量 | 多环境部署、按环境注入配置 |
-
-> 如果你的自定义构建逻辑超过几百行，停下来想想是不是工具选错了。成熟框架的脚手架已经覆盖了 95% 的场景，与其维护一套复杂配置，不如换更贴合的工具。
-
-## 迁移和共存
-
-从 Webpack 迁到 Vite 是常见诉求（为了开发速度）。迁移要点：
-
-- 渐进式：先用 Vite 做开发服务器，生产仍用 Webpack，验证无问题后再统一切换。
-- 检查插件依赖：Webpack 专有插件在 Vite 没有对应，要找替代或自己实现。
-- 路径别名、环境变量：两套工具配置方式不同，要同步。
-
-不要为了"用新工具"而迁移。迁移的收益（开发速度、维护成本）要明确大于迁移成本。
-
-## 务实的检查清单
-
-- 是否基于项目类型选工具（应用用 Vite/Webpack，库用 Rollup）？
-- 生产构建是否做了代码分割、压缩、资源指纹？
-- 第三方依赖是否分离到独立 chunk，利于长期缓存？
-- 路由和重组件是否用了动态 import 懒加载？
-- 构建配置是否尽量简单，避免过度自定义？
-- 是否定期检查 bundle 产物体积（如 bundle analyzer）？
-
-构建工具是手段，不是目的。选对工具的标准是"它解决了你的问题而不给你添新问题"。Vite 不是万能药，Webpack 也不是过时货——匹配项目阶段和团队能力的，就是对的。
+- [模块化演进](/web/JavaScript/modules)：tree-shaking 和动态导入的原理
+- [环境与配置管理](/engineering/environment)：多环境配置怎么管理
+- [持续集成与发布](/engineering/ci-delivery)：把构建检查放进流水线
