@@ -10,7 +10,7 @@
         <a href="/practice/">实践</a>
         <a href="/web/JavaScript/ES6">前端</a>
         <a href="/backend/overview">后端</a>
-        <a href="/ai/llm-basics">AI</a>
+        <a href="/ai/">AI</a>
       </nav>
     </header>
 
@@ -109,9 +109,9 @@
             <p>从工程化地图、提交边界到测试、发布与可观测性，把“能运行”推进到“可长期维护”。</p>
             <span class="shelf-card__link">阅读工程化笔记 <i aria-hidden="true">→</i></span>
           </a>
-          <a class="shelf-card shelf-card--ai" href="/ai/llm-basics">
+          <a class="shelf-card shelf-card--ai" href="/ai/">
             <span class="shelf-card__mark">AI</span>
-            <span class="shelf-card__meta">4 篇 · 模型与应用</span>
+            <span class="shelf-card__meta">12 篇 · 模型与应用</span>
             <h3>AI 与 Agent</h3>
             <p>从大语言模型的生成本质出发，理解 Prompt、工具调用与检索增强，把模型能力落到可工程化的应用里。</p>
             <span class="shelf-card__link">阅读 AI 笔记 <i aria-hidden="true">→</i></span>
