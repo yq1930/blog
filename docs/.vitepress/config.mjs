@@ -31,7 +31,7 @@ export default defineConfig({
       { text: '前端', link: '/web/JavaScript/ES6' },
       { text: '后端', link: '/backend/overview' },
       { text: '工程化', link: '/engineering/toolchain' },
-      { text: 'AI', link: '/ai/llm-basics' }
+      { text: 'AI', link: '/ai/' }
     ],
     sidebar: {
       '/practice/': [
@@ -228,9 +228,15 @@ export default defineConfig({
       ],
       '/ai/': [
         {
+          text: '阅读地图',
+          items: [
+            { text: 'AI 栏目导读', link: '/ai/' }
+          ]
+        },
+        {
           text: '基础理论',
           items: [
-            { text: 'LLM 基础与 Agent 开发', link: '/ai/llm-basics' },
+            { text: 'LLM 基础', link: '/ai/llm-basics' },
             { text: 'Prompt 工程实践', link: '/ai/prompt-engineering' },
             { text: '多模态应用入门', link: '/ai/multimodal' }
           ]
@@ -238,6 +244,7 @@ export default defineConfig({
         {
           text: '应用架构',
           items: [
+            { text: 'Agent 开发实战：Harness', link: '/ai/agent-development' },
             { text: 'Agent 架构与工具调用', link: '/ai/agent-architecture' },
             { text: 'RAG 检索增强生成', link: '/ai/rag' },
             { text: 'LLM 多模型选型与成本控制', link: '/ai/model-selection' },
@@ -247,6 +254,7 @@ export default defineConfig({
         {
           text: '工程与产品',
           items: [
+            { text: 'ZCode 与 DeepSeek Harness', link: '/ai/zcode-vs-deepseek-harness' },
             { text: 'AI 辅助编码工作流', link: '/ai/ai-coding-workflow' },
             { text: 'LLM 应用安全', link: '/ai/security' },
             { text: 'AI 产品设计边界', link: '/ai/product-design' }
