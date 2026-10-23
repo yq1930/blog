@@ -60,6 +60,7 @@ export default defineConfig({
           items: [
             { text: 'Yaf 多应用整理', link: '/practice/yaf-multi-app-architecture' },
             { text: 'PHP 严重漏洞处置与升级', link: '/practice/php-critical-vulnerability-response' },
+            { text: 'SQL 批处理与结果集', link: '/practice/sql-batch-result-contract' },
             { text: '事务、幂等与补偿', link: '/practice/transactional-business-workflow' }
           ]
         },
@@ -68,7 +69,11 @@ export default defineConfig({
           items: [
             { text: 'Vue 2 多端项目治理', link: '/practice/vue2-multi-terminal-engineering' },
             { text: '移动 H5 会话与恢复', link: '/practice/mobile-h5-reliability' },
-            { text: '原生小程序分层', link: '/practice/native-mini-program-architecture' }
+            { text: 'H5 数据与布局就绪', link: '/practice/h5-layout-readiness' },
+            { text: '浏览器打印分页', link: '/practice/browser-print-pagination' },
+            { text: '原生小程序分层', link: '/practice/native-mini-program-architecture' },
+            { text: '动态导航与规则缓存', link: '/practice/runtime-navigation-rules' },
+            { text: '插件宿主与版本兼容', link: '/practice/plugin-host-compatibility' }
           ]
         },
         {

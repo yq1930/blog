@@ -1,11 +1,11 @@
 ---
 title: 真实工程实践
-description: 从 Vue 3 笔记应用、Express 服务端，以及 PHP/Yaf、Vue 2、移动 H5 和微信小程序项目中整理出的可复用开发经验。
+description: 从笔记应用、桌面扩展，以及 PHP/Yaf、Vue 2、移动 H5 和微信小程序的近期改动中整理出的可复用开发经验。
 ---
 
 # 真实工程实践
 
-这里收录两组真实项目经验：一组来自 Vue 3、Express 与 MySQL 构建的笔记应用；另一组来自 PHP/Yaf 服务端支撑 PC 管理后台、移动 H5 和微信小程序的多端系统。
+这里收录笔记应用、桌面扩展与多端业务系统的真实项目经验，覆盖 Vue 3、Express、PHP/Yaf、PC 管理后台、移动 H5 和原生微信小程序。
 
 文章不会按源码目录逐个介绍，而是挑开发中反复出现的问题，用短流程图、简化项目代码和检查清单讲清楚。
 
@@ -22,6 +22,20 @@ description: 从 Vue 3 笔记应用、Express 服务端，以及 PHP/Yaf、Vue 2
 3. [旧系统怎样一步步改](/practice/legacy-modernization-roadmap)：不停止业务，也不做高风险推倒重来。
 
 这三篇建立整体视角，后面的文章可以按当前问题直接选择。
+
+## 近期改动选读：2026-10-23
+
+本轮从八个项目近 30 天的本地提交中取材，沿直接相关修复追踪上下文。已提交源码只证明实现状态，不等于已经部署或通过本次业务实测；未提交的在途改动没有写成稳定能力。
+
+| 取材方向 | 新增经验 |
+| --- | --- |
+| 两个移动 H5 的滚动、海报与定位修复 | [数据、图片与布局就绪](/practice/h5-layout-readiness) |
+| PC 后台的单条及批量打印 | [打印空白页与分页规则](/practice/browser-print-pagination) |
+| PHP 报表服务及配套前端 | [SQL 批处理结果契约](/practice/sql-batch-result-contract) |
+| 桌面扩展的设置接口和依赖调整 | [插件宿主兼容](/practice/plugin-host-compatibility) |
+| 原生小程序的动态跳转改造 | [缓存候选范围、确认时重读规则](/practice/runtime-navigation-rules) |
+
+同时更新已有文章中的过时描述：[AI 编辑](/practice/notes-ai-editing)补齐取消链路与并发准入，[发布恢复](/practice/notes-release-recovery)补充固定提交和依赖恢复，[本地草稿](/practice/notes-save-lifecycle)补充类型隔离，[H5 会话](/practice/mobile-h5-reliability)补充入口身份来源和失败反馈。
 
 ## 笔记应用：Vue 3 与 Express 全栈实践
 
@@ -82,6 +96,11 @@ description: 从 Vue 3 笔记应用、Express 服务端，以及 PHP/Yaf、Vue 2
 | 三个客户端对同一接口判断不一样 | [跨端 API 契约](/practice/cross-client-api-contract) |
 | Yaf 控制器和公共库越来越大 | [Yaf 多应用架构](/practice/yaf-multi-app-architecture) |
 | PHP 爆出严重漏洞，旧项目又不能直接升级 | [PHP 漏洞处置与升级](/practice/php-critical-vulnerability-response) |
+| SQL 在工具里有数据，报表页面却为空 | [SQL 批处理结果契约](/practice/sql-batch-result-contract) |
+| 图片加载后滑不动，海报缺图或首屏被定位卡住 | [H5 布局就绪](/practice/h5-layout-readiness) |
+| 打印总是多一张空白页 | [浏览器打印分页](/practice/browser-print-pagination) |
+| 插件能安装，但宿主设置保存不生效 | [插件宿主兼容](/practice/plugin-host-compatibility) |
+| 跳转规则有时效，旧页面仍按旧规则执行 | [动态导航规则](/practice/runtime-navigation-rules) |
 | 写操作偶尔重复或状态不一致 | [高一致性业务工作流](/practice/transactional-business-workflow) |
 | Vue 2 路由、全局方法和 UI 库混在一起 | [Vue 2 多端工程治理](/practice/vue2-multi-terminal-engineering) |
 | H5 登录后回不来或重复弹窗 | [移动 H5 可靠性](/practice/mobile-h5-reliability) |
