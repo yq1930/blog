@@ -1,174 +1,200 @@
 ---
 title: CSS 性能优化
-description: 从重排重绘、选择器复杂度和关键 CSS 三处入手，让样式表不拖累渲染。
+description: 分加载和运行两个阶段讲 CSS 性能：为什么 CSS 会阻塞首屏、为什么读一下 offsetWidth 就会卡，并修复字体闪烁、中文字体过大、滚动卡顿等实际问题。
 ---
 
 # CSS 性能优化
 
-CSS 性能问题分两类：**加载阶段**（CSS 阻塞首次渲染）和**运行阶段**（样式变化触发重排重绘）。前者让首屏变慢，后者让交互卡顿。优化的核心不是堆技巧，而是搞清楚瓶颈在哪个阶段，针对性下手。本篇按渲染流水线梳理 CSS 的性能要点。
+CSS 的性能问题分两类，症状完全不同：
 
-## 先理解渲染流水线
+- **加载阶段**：CSS 没下载完，页面一直白着；字体没加载完，文字看不见或者突然变样；
+- **运行阶段**：滚动一卡一卡，拖拽跟不上手指，输入有延迟。
 
-浏览器把一帧画面渲染出来，经过五个阶段。每个 CSS 操作可能触发其中几个：
+优化前先判断是哪一类，再对症下药。盲目给所有元素加 `will-change`、到处改选择器写法，往往收效甚微。
+
+::: tip 读完这篇你会
+- 理解渲染流水线，知道哪些操作“贵”
+- 处理阻塞渲染的 CSS 和字体，缩短白屏时间
+- 发现并修复“强制同步布局”这类运行时卡顿
+:::
+
+## 1. 原理：浏览器怎么把 CSS 变成画面
 
 ```text
-样式计算 → 布局(Layout) → 绘制(Paint) → 合成(Composite) → 显示
-                ↑重排        ↑重绘        ↑仅合成
+HTML → DOM 树 ┐
+              ├→ 样式计算 → 布局 → 绘制 → 合成 → 屏幕
+CSS  → 样式表 ┘              ↑重排    ↑重绘   ↑仅合成
 ```
 
-| 操作 | 触发 | 成本 |
-| --- | --- | --- |
-| 改 `transform`、`opacity` | 仅合成 | 最低 |
-| 改 `color`、`background` | 重绘 | 中 |
-| 改 `width`、`margin`、`top` | 重排（重新布局） | 高 |
-| 改字体、插入/删除元素 | 重排 + 重绘 | 最高 |
+可以拿装修房子打比方：
 
-> 动画优先改 `transform` 和 `opacity`，它们走合成线程，不阻塞主线程。详见 [动画与过渡](./animation.md)。
+- **布局**（也叫重排）：重新测量每件家具的尺寸、重新摆放位置。一件家具变大，周围的都要挪。**最贵**。
+- **绘制**（也叫重绘）：位置不变，只是重新刷墙、换颜色。**中等**。
+- **合成**：在透明玻璃上挪动贴纸，墙和家具都不用动。**最便宜**。
 
-## 重排 vs 重绘：能不重排就不重排
-
-重排（reflow）重新计算所有元素的几何位置，成本远高于重绘（repaint）。浏览器会批量处理样式变化，但某些操作会**强制同步布局**——读取布局属性会立刻触发布局计算：
-
-```js
-// 差：循环里读布局属性，每次都强制重排
-for (const el of items) {
-  el.style.width = el.offsetWidth + 10 + 'px'; // 读 offsetWidth 触发重排
-}
-
-// 好：先读后写，分两轮
-const widths = items.map(el => el.offsetWidth);
-items.forEach((el, i) => { el.style.width = widths[i] + 10 + 'px'; });
-```
-
-| 操作 | 是否强制布局 |
+| 操作 | 触发 |
 | --- | --- |
-| 读写 `offsetWidth/Height/Top` | 是 |
-| `getComputedStyle()` | 是 |
-| `scrollTop/scrollHeight` | 是 |
-| 改 class、内联 style | 否（批量延迟） |
-| 改 `transform` | 否 |
+| 改 `transform`、`opacity` | 只合成 |
+| 改 `color`、`background`、`box-shadow` | 绘制 + 合成 |
+| 改 `width`、`height`、`margin`、`top`、字号；插入删除元素 | 布局 + 绘制 + 合成 |
 
-规则：**批量读写分离**。需要读布局信息时，一次性读完，再统一写入修改，避免交替触发。
+## 2. 加载阶段：CSS 为什么会让页面白屏
 
-## 选择器复杂度：右到左匹配
+浏览器在 CSS 下载并解析完之前**不会渲染页面**。这是故意的：如果先用无样式的 HTML 渲染，等 CSS 来了再重新排版，用户会看到页面剧烈闪烁。代价是 CSS 越大、请求越慢，白屏越久。
 
-浏览器从选择器最右侧（关键选择器）开始匹配。过深或过宽的选择器在大型页面上会有成本：
+优化思路是：**首屏需要的 CSS 尽快给，用不到的往后放**。
 
-```css
-/* 慢：关键选择器是 *，遍历页面所有元素 */
-.nav * { ... }
-
-/* 慢：多层后代选择器 + 属性匹配 */
-body > .app .content div[class*="item"] { ... }
-
-/* 快：单 class 关键选择器 */
-.nav-item { ... }
-```
-
-现代浏览器引擎优化得很好，选择器性能多数时候不是瓶颈。但保持两条原则能避免极端情况：
-
-| 原则 | 说明 |
-| --- | --- |
-| 关键选择器尽量是 class | 最右侧匹配要高效 |
-| 后代选择器不超过 3 层 | `.a .b .c .d .e` 已经太深 |
-| 避免用 `*` 作为关键选择器 | 遍历全页面 |
-
-## contain：隔离渲染影响范围
-
-`contain` 属性告诉浏览器"这个元素的渲染影响范围被限制在自身"，浏览器可以据此跳过对外部布局和绘制的重新计算：
-
-```css
-.card { contain: layout paint; }
-.widget { contain: layout style paint; }
-```
-
-| 值 | 含义 |
-| --- | --- |
-| `layout` | 元素布局变化不影响外部 |
-| `paint` | 子元素不会绘制到元素边界外 |
-| `style` | 计数器和引用变化被隔离 |
-| `size` | 元素尺寸与子元素无关（需自己给大小） |
-| `content` | `layout style paint` 的简写 |
-| `strict` | 全部隔离（除 `size`） |
-
-适合用在独立的卡片、第三方 widget、长列表项上。注意 `contain: size` 会让元素忽略子内容尺寸，必须显式给宽高，慎用。
-
-## content-visibility：跳过屏外内容
-
-`content-visibility: auto` 让浏览器**跳过屏外元素的渲染**，直到它们进入视口才真正绘制。对长列表、长文档效果显著：
-
-```css
-.long-list-item {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 200px; /* 预估高度，避免滚动条跳动 */
-}
-```
-
-`contain-intrinsic-size` 提供占位高度，浏览器用它计算滚动条位置。不设置的话，滚动条会在内容渲染时剧烈跳动。
-
-> `content-visibility` 会让屏外元素的查找（如 Ctrl+F）行为变化，部分浏览器在内容未渲染时不参与搜索。需要全文搜索的场景慎用。
-
-## 关键 CSS 内联
-
-CSS 是**阻塞渲染**的资源——浏览器必须解析完 CSS 才能渲染页面。外部 CSS 文件需要额外的网络请求，延长首屏时间。常见优化是**把首屏需要的关键 CSS 内联进 HTML**，其余的异步加载：
+- **构建时合并、压缩**，减少请求数和体积；
+- **避免在 CSS 里写 `@import`**：浏览器下载完当前文件、解析到 `@import` 才发现还有依赖，再发请求，形成串行等待。用构建工具在打包时合并；
+- **按需加载**：路由级代码分割会让每个页面只加载自己的 CSS；
+- **非关键样式不阻塞**：打印样式可以加 `media="print"`，浏览器会以低优先级下载，不阻塞首屏。
 
 ```html
-<head>
-  <!-- 关键 CSS 内联，立即生效 -->
-  <style>
-    body { margin: 0; font-family: var(--font-body); }
-    .hero { min-height: 60vh; background: var(--color-primary); }
-  </style>
-  <!-- 其余 CSS 异步加载，不阻塞首屏 -->
-  <link rel="preload" href="/assets/app.css" as="style" onload="this.rel='stylesheet'">
-</head>
+<link rel="stylesheet" href="/assets/app.css" />
+<link rel="stylesheet" href="/assets/print.css" media="print" />
 ```
 
-判断"关键"的标准：**移除它，首屏立刻变形**。首屏用不到的（如弹窗、二级页面样式）都该延后。
+对首屏特别敏感的落地页，可以把首屏用到的少量关键 CSS 直接内联在 `<head>` 里，剩下的再异步加载。判断“关键”的标准是：去掉它，首屏会立刻变形。
 
-## 避免 @import
+## 3. 坑一：字体加载期间，文字看不见或突然跳动
 
-`@import` 在 CSS 中引入其他 CSS，但它**串行加载**——浏览器必须先下载当前文件，解析到 `@import` 才发现还有依赖，再发请求。这比 `<link>` 多一个往返：
+**现象**：页面打开后，标题的位置空白了一两秒才出现文字（慢网络下更久）；或者文字先用系统字体显示，过一会儿“闪”一下变成另一种字体，整段文字的换行位置都变了。
 
-```css
-/* 慢：串行加载 */
-@import url("base.css");
-@import url("components.css");
+**原因**：自定义字体还没下载完时，浏览器要么先隐藏文字等字体（称为 FOIT），要么先用备用字体显示、下载完再替换（称为 FOUT）。替换时，两种字体的宽度不同，就会引起布局跳动。
 
-/* 快：构建期合并成一个文件，或在 HTML 用多个 link 并行 */
-```
-
-生产环境应通过构建工具把所有 CSS 合并压缩成一个文件，避免运行时 `@import`。
-
-## 字体加载策略
-
-字体文件加载完成前，浏览器要么隐藏文字（FOIT），要么先用回退字体显示再切换（FOUT），都会影响体验：
-
-| 策略 | 含义 |
-| --- | --- |
-| `font-display: swap` | 立即用回退字体，加载完切换（推荐） |
-| `font-display: optional` | 极短时间内加载完就用，否则不切换（适合非关键字体） |
-| `font-display: block` | 短暂隐藏后强制等加载（不推荐，用户看不到字） |
+**修复**：
 
 ```css
 @font-face {
-  font-family: "BodyText";
-  src: url("/fonts/body.woff2") format("woff2");
-  font-display: swap;
-  unicode-range: U+0000-00FF; /* 只加载实际用到的字符范围 */
+  font-family: 'BrandSans';
+  src: url('/fonts/brand-sans.woff2') format('woff2');
+  font-display: swap; /* 先用备用字体显示，不让用户看空白 */
 }
 ```
 
-用 `woff2` 格式（体积最小），并按 unicode-range 拆分字体文件，按需加载。
+- `font-display: swap` 保证文字始终可见；
+- 首屏标题用到的关键字体可以 `<link rel="preload" as="font" type="font/woff2" crossorigin>` 提前下载（`crossorigin` 不能省，否则会下载两次）；
+- 选择和自定义字体宽度接近的备用字体，减少替换时的跳动。
 
-## 务实的检查清单
+## 4. 坑二：引入一个中文字体，页面多了好几 MB
 
-- 动画是否优先用 `transform`/`opacity`，避免触发重排？
-- JS 是否批量读写布局属性，避免交替触发强制布局？
-- 选择器是否控制在合理深度，关键选择器是 class？
-- 长列表/独立组件是否用了 `contain` 或 `content-visibility`？
-- 首屏关键 CSS 是否内联，非关键样式是否异步加载？
-- 是否避免了运行时 `@import`，构建期合并 CSS？
-- 字体是否用 `font-display: swap` 和 `woff2`？
+**现象**：为了标题好看引入了一款中文字体，首页体积暴涨，手机上标题半天显示不出来。
 
-CSS 性能优化的优先级：**先解决阻塞首屏的资源（关键 CSS 内联、避免 @import），再处理运行时重排（动画属性、批量布局读写），最后才考虑选择器复杂度这类微优化**。不要为了微优化牺牲可维护性。
+**原因**：英文字体只有几百个字符，中文字体动辄包含数万个汉字，单个文件常常有数 MB 甚至更大。
+
+**修复**：
+
+- **能用系统字体就用系统字体**：`-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif` 在各平台都有不错的效果，零下载；
+- **只用在少量固定文字上**（如 Logo、标题）：用字体子集工具只保留实际用到的字，体积能从几 MB 降到几十 KB；
+- **必须全量使用**：选择支持按 `unicode-range` 分片的字体服务或方案，让浏览器只下载页面上出现的字所在的分片。
+
+## 5. 运行阶段：强制同步布局
+
+正常情况下，你连续修改样式，浏览器会把它们攒起来，在下一帧统一计算布局。但如果你**改了样式之后立刻读取布局信息**（比如 `offsetWidth`），浏览器为了给你一个准确的值，只能马上把布局算一遍。这叫**强制同步布局**。
+
+### 坑三：一个循环让页面卡了几百毫秒
+
+**现象**：给列表里每一项设置高度，列表有几百项时，页面明显卡顿。
+
+```js
+// ❌ 读和写交替：每次循环都触发一次完整的布局计算
+for (const el of items) {
+  el.style.height = `${el.offsetWidth * 0.75}px` // 读 offsetWidth → 写 height → 下一轮再读……
+}
+```
+
+**原因**：第一轮写了 `height`，布局就“脏”了；第二轮读 `offsetWidth` 时，浏览器只好立刻重新布局。几百项就是几百次布局，这种现象叫**布局抖动**（layout thrashing）。
+
+**修复**：先把要读的都读完，再统一写：
+
+```js
+// ✅ 先批量读，再批量写：整个过程只布局一次
+const widths = items.map((el) => el.offsetWidth)
+items.forEach((el, i) => {
+  el.style.height = `${widths[i] * 0.75}px`
+})
+```
+
+会触发强制布局的常见读取：`offsetWidth/Height/Top/Left`、`clientWidth/Height`、`scrollTop/scrollHeight`、`getBoundingClientRect()`、`getComputedStyle()`。
+
+当然，这个例子最好的写法是根本不用 JS：`aspect-ratio: 4 / 3` 就能让高度跟着宽度走。
+
+## 6. 坑四：滚动监听让页面一卡一卡
+
+**现象**：页面上有“滚动到某处显示返回顶部按钮”“元素进入视口时播放动画”等功能，滚动时明显掉帧。
+
+```js
+// ❌ 滚动时每一帧都读布局，还可能触发多次
+window.addEventListener('scroll', () => {
+  for (const el of sections) {
+    if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-visible')
+  }
+})
+```
+
+**原因**：`scroll` 事件触发得非常频繁，每次都对很多元素调用 `getBoundingClientRect()`，再配合加类名修改样式，就成了反复的读写交替。
+
+**修复**：判断“元素是否进入视口”交给 `IntersectionObserver`，浏览器会在合适的时机异步通知你，不需要你在滚动时反复测量：
+
+```js
+const observer = new IntersectionObserver((entries) => {
+  for (const entry of entries) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible')
+      observer.unobserve(entry.target) // 只需要触发一次
+    }
+  }
+})
+
+sections.forEach((el) => observer.observe(el))
+```
+
+确实需要监听滚动时，加上 `{ passive: true }` 告诉浏览器你不会阻止滚动，并用 `requestAnimationFrame` 把处理合并到每帧一次。
+
+## 7. 坑五：毛玻璃和大阴影让低端手机滚动卡顿
+
+**现象**：在电脑上很流畅的页面，在中低端安卓手机上滚动卡顿，特别是有固定顶栏的页面。
+
+**原因**：`backdrop-filter: blur()`（毛玻璃）、大范围的 `box-shadow`、`filter` 都是绘制成本很高的效果。固定在顶部的毛玻璃顶栏，在滚动的每一帧都要重新模糊它后面的内容。
+
+**修复**：在性能敏感的场景降低效果，比如用半透明纯色背景代替毛玻璃、减小阴影的模糊半径；或者只在高性能设备上启用这些效果。
+
+## 8. 长页面：让浏览器跳过看不见的部分
+
+```css
+.feed-item {
+  content-visibility: auto;            /* 不在屏幕附近的元素，跳过布局和绘制 */
+  contain-intrinsic-size: auto 320px;  /* 预估高度，避免滚动条跳动 */
+}
+```
+
+`content-visibility: auto` 对很长的列表、文档效果明显。注意必须提供 `contain-intrinsic-size` 作为占位高度，否则浏览器会把屏幕外的元素当作 0 高度，滚动条会忽长忽短。
+
+对于独立的小部件（卡片、第三方挂件），可以用 `contain: layout paint` 告诉浏览器“它内部的变化不会影响外面”，缩小每次重新计算的范围。
+
+## 9. 选择器性能：通常不是瓶颈
+
+浏览器从右往左匹配选择器，`.nav *` 这类写法确实更慢。但在现代浏览器里，选择器匹配很少成为真正的瓶颈。保持两个习惯就够了：关键选择器用类名，嵌套不超过 3 层。把精力优先花在上面几个坑上。
+
+## 排查思路
+
+1. **白屏久**：用 Lighthouse 跑一次，看 “Eliminate render-blocking resources”（消除阻塞渲染的资源）里列出了哪些 CSS 和字体；在 Network 面板看 CSS、字体文件的大小和加载时机。
+2. **文字跳动、布局偏移**：在 DevTools 的 Rendering 面板勾选 Layout Shift Regions，发生偏移的区域会闪蓝色。
+3. **交互卡顿**：用 Performance 面板录制，找长任务里的紫色 Layout 块。DevTools 会在强制同步布局的地方标出 “Forced reflow” 警告，并指向触发它的代码行。
+4. **滚动卡顿**：在 Rendering 面板勾选 Paint flashing，看滚动时哪些区域在不停重绘。
+
+## 检查清单
+
+- [ ] CSS 在构建时合并压缩，没有运行时 `@import`
+- [ ] 字体使用 `woff2` 和 `font-display: swap`，关键字体预加载
+- [ ] 中文字体优先用系统字体，自定义字体做子集
+- [ ] JS 里布局的读写分批进行，没有在循环里交替读写
+- [ ] 可见性判断用 `IntersectionObserver`，不在滚动事件里测量布局
+- [ ] 动画只改 `transform` 和 `opacity`
+- [ ] 毛玻璃、大阴影在低端设备上有降级方案
+
+## 延伸阅读
+
+- [动画与过渡](/web/css/animation)：为什么 `transform` 动画更流畅
+- [性能与加载体验](/web/frontend/performance)：LCP、CLS、INP 等指标怎么看
+- [事件循环与执行模型](/web/JavaScript/event-loop)：长任务如何阻塞交互

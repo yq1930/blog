@@ -1,98 +1,166 @@
 ---
 title: Grid 网格布局
-description: 用显式轨道和命名区域掌控二维布局，以及何时该用 Grid 而不是 Flexbox。
+description: 先画格子再放内容。讲清轨道、fr 和 auto-fit 的工作方式，修复 1fr 列被长内容撑宽、卡片太少被拉宽、窄屏溢出、区域写错整体失效等 Grid 常见问题。
 ---
 
 # Grid 网格布局
 
-CSS Grid 解决的是二维布局——同时控制行和列。它适合页面骨架（header/main/sidebar/footer）、卡片矩阵、表单的标签-输入对这类"需要行列同时对齐"的场景。和 Flexbox 的根本区别：Flexbox 是一维的（沿一个方向流动），Grid 是二维的（元素被放进网格单元）。理解了轨道（track）和命名区域，大部分 Grid 代码就不需要查文档。
+Grid 是专门做二维布局（同时控制行和列）的工具：页面骨架、卡片矩阵、表单的标签与输入框对齐，用它都比 Flexbox 简单。但 Grid 也有几个经典的坑：
 
-## 显式轨道：定义网格的结构
+- 主栏写了 `1fr`，一个代码块就把它撑得比屏幕还宽；
+- 卡片只有两张时，被拉得又宽又扁；
+- 在 320px 宽的小手机上，卡片网格溢出了屏幕；
+- `grid-template-areas` 改了一行，整个页面布局全乱。
 
-`grid-template-columns` 和 `grid-template-rows` 定义网格的列和行。每一段长度叫一条轨道。
+这篇先建立“画格子”的思维模型，再逐个解决这些问题。
 
-```css
-/* 固定三列 */
-.grid { display: grid; grid-template-columns: 200px 1fr 200px; gap: 1rem; }
-/* 侧栏 200px | 主区占满 | 侧栏 200px */
+::: tip 读完这篇你会
+- 用轨道、网格线、区域三个概念读懂任何 Grid 代码
+- 写出不需要媒体查询的响应式卡片网格
+- 知道 `minmax(0, 1fr)` 和 `min(16rem, 100%)` 这两个关键写法为什么必要
+:::
+
+## 1. 原理：先画格子，再放东西
+
+Grid 的工作方式像停车场：先在地上画好线（定义行和列），车（子元素）进来后按顺序一个格子一个格子停进去。
+
+```text
+     线1      线2            线3      线4
+      │ 200px │     1fr      │ 200px │
+线1 ──┼───────┼──────────────┼───────┼──
+      │  ①   │      ②      │  ③   │   ← 第 1 行轨道
+线2 ──┼───────┼──────────────┼───────┼──
+      │  ④   │      ⑤      │  ⑥   │   ← 第 2 行轨道
+线3 ──┴───────┴──────────────┴───────┴──
 ```
 
-单位选择：
+四个概念：
 
-| 单位 | 含义 | 适用 |
-| --- | --- | --- |
-| `px` / `rem` | 固定长度 | 不希望变化的列（侧栏） |
-| `fr` | 按比例分配剩余空间 | 弹性主区、等分列 |
-| `auto` | 按内容大小 | 内容决定宽度的列 |
-| `minmax(min, max)` | 限制范围 | 响应式卡片网格 |
-| `%` | 容器宽度百分比 | 简单百分比布局 |
-
-`fr` 是 Grid 最常用的单位，它分配的是**剩余空间**（扣掉固定列和 gap 之后）：
+- **轨道**（track）：一整行或一整列，比如上图中间那列 `1fr`；
+- **网格线**（line）：轨道之间的分隔线，从 1 开始编号，跨列、跨行时用它定位；
+- **单元格**（cell）：一行和一列交叉的格子；
+- **区域**（area）：几个相邻单元格合成的矩形，可以起名字。
 
 ```css
-/* 1fr 2fr 1fr：左中右按 1:2:1 分配剩余空间 */
-.three-col { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 1rem; }
-```
-
-## repeat 和 auto-fit：响应式卡片网格
-
-`repeat()` 简化重复轨道，配合 `auto-fit` 和 `minmax()` 能做出"宽度够就多放一列，不够就少放"的响应式网格，**不需要任何媒体查询**：
-
-```css
-/* 经典响应式卡片：每列最少 16rem，剩余空间均分 */
-.cards {
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: 200px 1fr 200px; /* 画三列 */
+  gap: 1rem;                              /* 格子之间的间距 */
 }
 ```
 
-| 写法 | 行为 |
-| --- | --- |
-| `repeat(3, 1fr)` | 固定 3 列，每列等分 |
-| `repeat(auto-fill, 16rem)` | 尽量多放 16rem 的列，空的也保留 |
-| `repeat(auto-fit, minmax(16rem, 1fr))` | 尽量多放，剩余空间分给现有列撑满 |
+子元素不需要写任何定位代码，会自动按顺序填进格子；放不下就自动新开一行。
 
-`auto-fit` 和 `auto-fill` 的区别只在"元素少于列数"时显现：`auto-fill` 会保留空列（占位），`auto-fit` 会把空列折叠掉，让现有元素拉伸填满。大多数卡片网格场景用 `auto-fit`。
+## 2. `fr`：按比例分剩余空间
 
-## gap：取代 margin 拼凑
-
-`gap` 是 Grid（和 Flexbox）的内置间距属性，替代了过去用负 margin、`+` 选择器、`:last-child` 清除间距的繁琐写法。
+`fr` 是 Grid 最常用的单位，表示“剩余空间的几份”。剩余空间 = 容器宽度 − 固定宽度的列 − 间距。
 
 ```css
-.grid { display: grid; gap: 1rem; }            /* 行列间距都是 1rem */
-.grid { gap: 1rem 2rem; }                       /* 行 1rem，列 2rem */
-.grid { row-gap: 1rem; column-gap: 2rem; }      /* 分别设置 */
+.three-col {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* 剩余空间按 1:2:1 分配 */
+}
 ```
 
-> 只要有"多个元素需要等间距排列"，优先用 `gap` 而不是给每个子元素加 margin。改一处间距，整体一致。
+| 单位 | 含义 | 适合 |
+| --- | --- | --- |
+| `px` / `rem` | 固定长度 | 侧栏、图标列 |
+| `fr` | 剩余空间的份数 | 主区、等分列 |
+| `auto` | 由内容决定 | 标签列、按钮列 |
+| `minmax(a, b)` | 最小 a、最大 b | 响应式列 |
 
-## 命名区域：用画图的方式布局
+### 坑一：`1fr` 的主栏被代码块撑得比屏幕还宽
 
-`grid-template-areas` 让你像画图一样定义布局，可读性远胜于坐标数字。适合固定的页面骨架。
+**现象**：文章页是“主栏 + 侧栏”两列。某篇文章里有一段很长的代码，整个页面出现横向滚动条，侧栏被挤出了屏幕。
 
 ```css
 .page {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 1fr 18rem;
+}
+```
+
+**原因**：`1fr` 其实是 `minmax(auto, 1fr)` 的简写，它的**最小值是 `auto`**，也就是“不能比内容的最小宽度更窄”。一行不能断开的长代码，最小宽度就是整行代码的宽度，于是把这一列撑开了。这和 Flexbox 里 `min-width: auto` 是同一类问题。
+
+**修复**：把最小值明确设为 0：
+
+```css
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+}
+
+.page pre {
+  overflow-x: auto; /* 代码块自己横向滚动，而不是撑开页面 */
+}
+```
+
+**怎么避免再犯**：放“内容长度不可控”的列（正文、表格、代码）时，用 `minmax(0, 1fr)` 代替 `1fr`。
+
+## 3. 不写媒体查询的响应式卡片网格
+
+```css
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: 1rem;
+}
+```
+
+从里往外读：
+
+- `minmax(16rem, 1fr)`：每列最少 16rem，最多平分剩余空间；
+- `repeat(auto-fit, ...)`：在容器里尽可能多放这样的列；
+- 容器变窄，放不下就自动减少列数，不需要任何断点。
+
+外面那层 `min(16rem, 100%)` 是为了下面这个坑。
+
+### 坑二：小屏手机上卡片溢出屏幕
+
+**现象**：在 320px 宽的老款手机上，卡片右边被截掉一截，页面能横向滚动。
+
+**原因**：`minmax(16rem, 1fr)` 的最小值是 16rem（256px）。容器扣掉内边距后如果比 256px 还窄，一列也放不下，可这一列又必须至少 256px，于是溢出。
+
+**修复**：用 `min(16rem, 100%)` 作为最小值：容器足够宽时是 16rem，比 16rem 还窄时就是容器的 100%。
+
+### 坑三：卡片只有一两张时，被拉得又宽又扁
+
+**现象**：搜索结果只有两条时，两张卡片各占半个屏幕，图片被拉伸得很难看。
+
+**原因**：`auto-fit` 会把没用到的空列**折叠掉**，再把空间分给现有的卡片，于是它们被拉宽。
+
+```text
+容器能放 4 列，但只有 2 张卡片：
+
+auto-fit:  [   卡片 1    ][   卡片 2    ]       空列被折叠，卡片拉伸
+auto-fill: [ 卡片1 ][ 卡片2 ][      ][      ]   空列保留，卡片保持宽度
+```
+
+**修复**：希望卡片宽度稳定时，改用 `auto-fill`；或者给最大值设上限，比如 `minmax(min(16rem, 100%), 20rem)`，再用 `justify-content` 控制整体对齐。
+
+## 4. 命名区域：用“画图”的方式布局页面骨架
+
+```css
+.page {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
-    "header header"
+    "header  header"
     "sidebar main"
-    "footer footer";
-  min-height: 100vh;
+    "footer  footer";
+  min-height: 100dvh;
 }
+
 .page__header  { grid-area: header; }
 .page__sidebar { grid-area: sidebar; }
 .page__main    { grid-area: main; }
 .page__footer  { grid-area: footer; }
-```
 
-```css
-/* 响应式：窄屏改成单列堆叠 */
+/* 窄屏：改成单列，只需要重画这张图 */
 @media (max-width: 48rem) {
   .page {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "header"
       "main"
@@ -102,56 +170,80 @@ CSS Grid 解决的是二维布局——同时控制行和列。它适合页面�
 }
 ```
 
-命名区域的优势：调整布局只需改 ASCII 图，子元素的 `grid-area` 引用不变，逻辑稳定。规则是每行字符串数必须等于列数，`.` 表示空单元格。
+调整布局时只改“图”，子元素的代码一行都不用动。
 
-## 显式轨道 vs 隐式轨道
+### 坑四：改了一行区域定义，整个布局全乱了
 
-`grid-template-*` 定义的是显式轨道——你提前声明的。但当元素数量超出显式网格能容纳的范围时，浏览器会自动创建**隐式轨道**（implicit tracks）。
+**现象**：给页面加了一个通知栏区域后，所有元素都挤成了一列，好像 Grid 完全没生效。
 
-```css
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 显式：3 列 */
-  grid-auto-rows: minmax(100px, auto);   /* 隐式行的高度 */
-  grid-auto-flow: row;                    /* 多出的元素按行放（默认） */
-}
-/* 放 10 个元素进去：前 3 行是显式，后面是隐式，自动换行 */
-```
+**原因**：`grid-template-areas` 有严格的规则，任何一条不满足，**整条声明都会被浏览器丢弃**：
 
-`grid-auto-flow: dense` 会让浏览器尝试用后续小元素填前面的空隙——适合大小不一的瀑布流，但会打乱视觉顺序，影响无障碍阅读顺序，慎用。
+- 每一行字符串的单元格数量必须相同，并且等于列数；
+- 同名区域必须连成一个矩形，不能是 L 形或者断开的；
+- 空单元格用 `.` 表示，不能留空。
 
-## 显式定位：跨越多行多列
+声明被丢弃后，子元素的 `grid-area` 找不到对应的区域，全部按默认规则排成一列。浏览器不会报错。
+
+**修复与预防**：在 DevTools 的 Styles 面板里，无效的声明会被划掉，并带一个黄色警告图标，看到它就说明区域定义写错了。修改区域定义时，逐行数一下单元格数量。
+
+## 5. 跨行跨列与隐式轨道
 
 ```css
 .featured {
-  grid-column: span 2;     /* 跨 2 列 */
-  grid-row: span 2;        /* 跨 2 行 */
+  grid-column: span 2; /* 跨 2 列 */
 }
-/* 或用起止线 */
-.hero { grid-column: 1 / 3; grid-row: 1 / 2; }
+
+.hero {
+  grid-column: 1 / -1; /* 从第 1 条线到最后一条线，即占满整行 */
+}
 ```
 
-显式定位破坏了"按顺序排列"的简单性，只在确实需要（如杂志式布局、跨格的特色卡片）时使用。日常网格让元素自然流入即可。
+`-1` 表示最后一条网格线，`1 / -1` 是“占满一整行”的常用写法。
 
-## 何时用 Grid，何时用 Flexbox
+子元素数量超出了你定义的行数时，浏览器会自动创建**隐式行**。它们的高度默认由内容决定，需要统一高度时用 `grid-auto-rows` 设置：
 
-| 场景 | 推荐 |
+```css
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 12rem; /* 自动生成的行都是 12rem 高 */
+}
+```
+
+::: warning 慎用 `grid-auto-flow: dense` 和 `order`
+`dense` 会让后面的小元素回填前面的空隙，`order` 会改变显示顺序。它们只改变**视觉顺序**，不改变 DOM 顺序。用键盘 Tab 浏览或使用读屏软件的用户，会按 DOM 顺序在页面上“跳来跳去”。内容的阅读顺序有意义时，就别用它们打乱。
+:::
+
+## 6. Grid 还是 Flexbox
+
+| 场景 | 选择 |
 | --- | --- |
-| 页面骨架（header/main/sidebar） | Grid |
-| 卡片矩阵、相册 | Grid |
-| 表单标签-输入对齐 | Grid |
-| 导航条、按钮组、标签云 | Flexbox |
-| 单行/单列元素对齐 | Flexbox |
-| 元素大小由内容决定、需要流动 | Flexbox |
+| 页面骨架（头部、侧栏、主区、页脚） | Grid |
+| 卡片矩阵、相册、需要行列都对齐的列表 | Grid |
+| 表单的“标签 + 输入框”对齐 | Grid |
+| 导航条、按钮组、标签列表 | Flexbox |
+| 一行内元素的对齐和间距分配 | Flexbox |
 
-经验法则：**需要行列同时对齐 → Grid；只沿一个方向排开 → Flexbox**。两者可以嵌套：Grid 做页面骨架，骨架内的导航条用 Flexbox。
+判断标准：**需要行和列同时对齐用 Grid，只沿一个方向排开用 Flexbox**。两者经常嵌套使用：Grid 搭骨架，骨架里的导航条用 Flexbox。
 
-## 务实的检查清单
+## 排查思路
 
-- 是否用 `fr` 而不是 `px` 来分配弹性空间？
-- 卡片网格是否用了 `auto-fit + minmax`，免去媒体查询？
-- 间距是否统一用 `gap`，而不是拼凑 margin？
-- 固定骨架是否用 `grid-template-areas` 画出来，而非坐标数字？
-- 是否在该用 Flexbox 的一维场景里没误用 Grid？
+1. **打开 Grid 可视化**：DevTools 的 Elements 面板里，Grid 容器旁边有 `grid` 标记，点击后页面上会画出网格线、线编号和区域名称，一眼就能看出元素落在了哪个格子。
+2. **列被撑宽**：选中那一列里的元素，看是哪个子元素的内容最宽；把 `1fr` 改成 `minmax(0, 1fr)` 验证。
+3. **布局整体失效**：在 Styles 面板找有没有被划掉、带警告图标的 `grid-template-*` 声明。
+4. **用不同数量的数据测试**：0 条、1 条、2 条、刚好一行、多行，`auto-fit` 和 `auto-fill` 的差异只在数量少时出现。
 
-Grid 的强项是显式、可预测的二维结构。当你能"一眼看出这张图有几行几列"时，Grid 是最自然的表达方式。复杂的自定义流动布局仍然要靠 Flexbox，两者各司其职。
+## 检查清单
+
+- [ ] 内容长度不可控的列使用 `minmax(0, 1fr)`
+- [ ] 响应式卡片网格使用 `repeat(auto-fit/auto-fill, minmax(min(Xrem, 100%), 1fr))`
+- [ ] 根据“数据少时是否允许拉伸”选择 `auto-fit` 或 `auto-fill`
+- [ ] 页面骨架用 `grid-template-areas`，每行单元格数量一致、区域是矩形
+- [ ] 间距统一用 `gap`，不给子元素拼 margin
+- [ ] 没有用 `dense`、`order` 打乱有意义的阅读顺序
+
+## 延伸阅读
+
+- [Flexbox 弹性布局](/web/css/flexbox)：`min-width: auto` 的同类问题
+- [响应式布局与容器](/web/css/layout)：容器查询与断点
+- [可访问性实战](/web/frontend/accessibility)：视觉顺序与键盘顺序
