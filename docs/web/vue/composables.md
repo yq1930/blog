@@ -1,47 +1,51 @@
 ---
 title: 组合式函数与逻辑复用
-description: 从 mixin 的混乱里走出来，用 useXxx 把状态和行为封装成可复用、可测试的单元。
+description: 组合式函数就是在 setup 里调用的普通函数。讲清它为什么必须同步调用，修复 await 之后注册生命周期导致监听泄漏、状态被所有组件意外共享、传参后失去响应、返回 .value 丢失响应、异步请求竞态等问题。
 ---
 
 # 组合式函数与逻辑复用
 
-Vue 2 的 mixin 解决了"复用逻辑"，但带来了三个老问题：命名冲突、来源不清、难追踪。组合式 API（Composition API）把复用单位从"一个混入对象"变成"一个函数"，逻辑来源、依赖关系、数据流全部显式化。组合式函数（composable）就是这套机制的标准用法。
+组合式函数（composable）是 Vue 3 复用逻辑的标准方式：把一组相关的状态和行为封装进一个 `useXxx` 函数，在多个组件里使用。它比 Vue 2 的 mixin 清晰得多，但也有自己的一套坑：
 
-## 为什么从 mixin 走到 composable
+- 在组合式函数里 `await` 了一下之后再注册 `onUnmounted`，结果监听器永远没被移除；
+- 两个组件用了同一个组合式函数，改了一个，另一个也跟着变；
+- 把 `props.id` 传进组合式函数，父组件改了 id，里面却没反应。
 
-| 问题 | mixin | composable |
+理解组合式函数的工作原理，这些问题都能一眼看穿。
+
+::: tip 读完这篇你会
+- 说清组合式函数和 mixin 的区别，以及“必须同步调用”的原因
+- 写出参数可以是普通值、ref 或 getter 的组合式函数
+- 避开生命周期泄漏、意外共享状态、丢失响应、请求竞态等坑
+:::
+
+## 1. 为什么从 mixin 换成组合式函数
+
+| 问题 | mixin | 组合式函数 |
 | --- | --- | --- |
-| 命名冲突 | 多个 mixin 同名属性互相覆盖，难排查 | 变量在函数作用域里，互不干扰 |
-| 来源不清 | 模板里用了个 `fetchUser`，不知道来自哪个 mixin | 显式 `const { fetchUser } = useUser()` |
-| 数据流 | 隐式注入，子组件无法知道父组件塞了什么 | 函数参数明确，返回值结构化 |
-| 类型推导 | 几乎做不到 | TypeScript 友好 |
+| 命名冲突 | 两个 mixin 有同名属性，后者悄悄覆盖前者 | 变量在函数作用域里，解构时可以改名 |
+| 来源不清 | 模板里用了 `loading`，不知道来自哪个 mixin | `const { loading } = useUser()`，一眼可见 |
+| 参数传递 | 无法传参，只能约定组件上有某个属性 | 普通函数参数 |
+| 类型推导 | 很难 | 天然支持 TypeScript |
 
-新项目别再 mixin。老项目迁移时优先把高频复用的逻辑改写成 composable。
+## 2. 原理：组合式函数就是普通函数
 
-## 写一个 composable 的套路
-
-三个部分：声明响应式状态、定义方法、返回需要在模板里用的内容。
+组合式函数没有任何魔法，它就是一个在 `setup` 里被调用的普通函数：
 
 ```js
 // useCounter.js
 import { ref, computed } from 'vue'
 
 export function useCounter(initial = 0) {
-  const count = ref(initial)
+  const count = ref(initial)           // 1. 声明状态
   const double = computed(() => count.value * 2)
 
-  function inc() {
-    count.value++
-  }
-  function reset() {
-    count.value = initial
-  }
+  function inc() { count.value++ }     // 2. 定义行为
+  function reset() { count.value = initial }
 
-  return { count, double, inc, reset }
+  return { count, double, inc, reset } // 3. 返回需要用的东西
 }
 ```
-
-使用：
 
 ```vue
 <script setup>
@@ -50,106 +54,215 @@ const { count, double, inc } = useCounter(10)
 </script>
 
 <template>
-  <button @click="inc">{{ count }} (x2 = {{ double }})</button>
+  <button type="button" @click="inc">{{ count }}（两倍：{{ double }}）</button>
 </template>
 ```
 
-返回的是响应式引用，模板里自动解包；在 JS 里要用 `.value` 访问。
+那组合式函数里的 `onMounted`、`onUnmounted` 是怎么知道自己属于哪个组件的？
 
-## 命名约定：useXxx
+Vue 在执行组件的 `setup` 时，会把“当前组件实例”记在一个全局变量里；`setup` 同步执行完毕，这个变量就被清空。`onMounted` 被调用时，就去看这个变量，把钩子注册到当前组件上。
 
-以 `use` 开头是强约定，它同时告诉读者和工具："这是个 composable，要在 setup 上下文里调用"。它不只是命名风格，ESLint 和 Vue 官方工具也靠这个前缀做识别。
+可以想成开会点名：只有在点名的那几分钟里喊“到”，才会被记为出席。`setup` 同步执行的这段时间就是点名时间，`await` 之后，点名已经结束了。
 
-文件名和函数名保持一致：`useCounter.js` 导出 `useCounter`。
+## 3. 坑一：`await` 之后注册生命周期，监听器永远不会被移除
 
-## 生命周期在 composable 里
-
-`onMounted`、`onUnmounted` 这些钩子可以在 composable 内部注册，前提是**在 `setup` 同步执行期间调用它**。这正是"必须在 setup 顶部调用 composable"的根本原因——异步之后再调用，钩子就注册不上了。
+**现象**：控制台出现警告 `onUnmounted is called when there is no active component instance to be associated with`；页面切换几次后，同一个事件处理函数被触发了好几次。
 
 ```js
-// useMousePosition.js
-import { ref, onMounted, onUnmounted } from 'vue'
-
-export function useMousePosition() {
-  const x = ref(0)
-  const y = ref(0)
-
-  function update(e) {
-    x.value = e.clientX
-    y.value = e.clientY
-  }
-
-  onMounted(() => window.addEventListener('mousemove', update))
-  onUnmounted(() => window.removeEventListener('mousemove', update))
-
-  return { x, y }
+export async function useLiveData() {
+  const config = await fetchConfig() // ❌ 在注册钩子之前 await 了
+  const handler = () => refresh(config)
+  window.addEventListener('focus', handler)
+  onUnmounted(() => window.removeEventListener('focus', handler)) // 此时已经不在“点名时间”
 }
 ```
 
-这样组件只管用，绑定和解绑由 composable 自己负责，不会泄漏。
+**原因**：`await` 之后的代码是在 `setup` 结束之后才执行的，当前组件实例已经被清空，`onUnmounted` 找不到组件，注册失败。于是组件卸载时没人移除监听器，每次进入页面都会多加一个。
 
-> 如果你的 composable 需要在异步上下文里使用生命周期，把钩子注册拆到同步路径，或返回一个让调用方在合适时机调用的 `connect()` / `disconnect()`。
-
-## 把"依赖"通过参数传进来
-
-composable 里直接 `import` 具体的 store、API、服务会让它和具体实现绑死，复用和测试都困难。更好的做法是把外部依赖作为参数传入：
+**修复**：生命周期钩子、`watch` 等需要绑定组件的调用，全部放在第一个 `await` **之前**：
 
 ```js
-export function useUserList(fetchUsers) {
-  const users = ref([])
-  async function load() {
-    users.value = await fetchUsers()
-  }
-  return { users, load }
-}
+export function useLiveData() {
+  const config = ref(null)
+  const handler = () => config.value && refresh(config.value)
 
-// 组件里
-const { users, load } = useUserList(() => userApi.list())
+  onMounted(() => window.addEventListener('focus', handler))
+  onUnmounted(() => window.removeEventListener('focus', handler))
+
+  fetchConfig().then((value) => {
+    config.value = value // 异步部分只负责更新数据
+  })
+
+  return { config }
+}
 ```
 
-测试时传入 mock 函数，composable 完全独立可测。
+**怎么避免再犯**：组合式函数本身写成同步函数，返回响应式状态；异步结果通过更新 ref 体现，而不是让调用方 `await` 它。
 
-## 可复用性边界：什么时候该写成 composable
+## 4. 坑二：状态写在函数外面，所有组件意外共享
 
-写成 composable 的判断标准：
-
-- 同一段状态 + 行为要在**两个或更多组件**里复用。
-- 逻辑足够独立，不依赖具体组件的 props 结构。
-- 有清晰的输入输出，内部状态对调用方有意义。
-
-不应该写成 composable 的情况：
-
-- 只在一个组件用、且逻辑很简单——直接写在 `<script setup>` 里更清晰。
-- 纯渲染相关的展示逻辑——用 `computed` 或子组件即可。
-- 跨组件共享的可变全局状态——那是 Pinia 的职责，不是 composable。
-
-## 常见错误：在 composable 里丢了响应式
-
-从 composable 返回值时，解构会丢掉响应式吗？不会——只要返回的是 `ref` / `computed`，解构出的本身就是响应式引用。
-
-但下面这种写法会丢响应式：
+**现象**：两个页面都用了 `useFilter()`，在页面 A 选了“已完成”，打开页面 B，筛选条件也变成了“已完成”。
 
 ```js
-// 反例：返回的是普通值，丢失了与源数据的连接
-export function useBad() {
+const status = ref('all') // ❌ 写在函数外面：整个应用只有这一份
+
+export function useFilter() {
+  return { status }
+}
+```
+
+**原因**：模块顶层的代码只在第一次被导入时执行一次。写在函数外面的 `ref` 只有一份，所有调用 `useFilter()` 的组件拿到的都是同一个对象。
+
+**修复**：每个组件需要独立状态，就把 `ref` 写在函数里面：
+
+```js
+export function useFilter() {
+  const status = ref('all') // 每次调用都创建新的
+  return { status }
+}
+```
+
+如果你**就是想要**全局共享（比如当前登录用户），写在外面是可以的，但要清楚这样做的后果；需要共享的业务状态，更推荐用 Pinia，它有开发者工具支持，服务端渲染时也不会在不同用户的请求之间串数据。
+
+## 5. 坑三：把 `props.id` 传进去，之后再也不更新
+
+**现象**：`useUser(props.userId)` 在父组件切换用户后，仍然显示第一个用户的数据。
+
+```js
+const props = defineProps({ userId: String })
+const { user } = useUser(props.userId) // ❌ 传进去的是此刻的一个字符串
+```
+
+**原因**：`props.userId` 在这里被读取成了一个普通字符串，组合式函数拿到的只是一个“快照”，和 props 之间的联系断了。
+
+**修复**：调用方传入 getter 函数或 ref；组合式函数内部用 `toValue()`（Vue 3.3+）统一读取，并用 `watch` 跟踪变化：
+
+```js
+// useUser.js
+import { ref, watch, toValue } from 'vue'
+
+export function useUser(userId) {
+  // userId 可以是普通值、ref 或 getter 函数
+  const user = ref(null)
+
+  watch(
+    () => toValue(userId),
+    async (id) => {
+      user.value = id ? await api.getUser(id) : null
+    },
+    { immediate: true }
+  )
+
+  return { user }
+}
+```
+
+```js
+// 组件里：传入 getter，保持和 props 的联系
+const { user } = useUser(() => props.userId)
+```
+
+## 6. 坑四：返回了 `.value`，响应式断了
+
+```js
+// ❌ 返回的是数字，不再响应
+export function useFirst() {
   const list = ref([1, 2, 3])
-  return { first: list.value[0] } // first 是个数字，不再响应
+  return { first: list.value[0] }
 }
 
-// 正例：用 computed 保持连接
-export function useGood() {
+// ✅ 返回 computed，保持和源数据的联系
+export function useFirst() {
   const list = ref([1, 2, 3])
   const first = computed(() => list.value[0])
   return { list, first }
 }
 ```
 
-记住：**要响应式就返回 ref / computed，不要返回它们的 `.value`**。
+规律：**要保持响应式，就返回 ref 或 computed 本身，不要返回它们的 `.value`**。从组合式函数返回的 ref 被解构后仍然是响应式的，这一点不用担心。
 
-## 检查表
+## 7. 坑五：参数变化太快，旧请求覆盖了新结果
 
-- 命名以 `use` 开头，文件名和函数名一致。
-- 在 `setup` 同步阶段调用，保证生命周期钩子能注册。
-- 外部依赖通过参数传入，方便测试和替换。
-- 返回值用 ref / computed 保持响应式，不要解出 `.value`。
-- 只在确实需要跨组件复用时才抽取；单组件简单逻辑别过度抽象。
+**现象**：用上面的 `useUser`，快速切换用户 1、用户 2，最终页面显示的却是用户 1。
+
+**原因**：用户 1 的请求比用户 2 的晚返回，覆盖了正确的结果。
+
+**修复**：`watch` 回调的第三个参数可以注册清理函数，参数再次变化或组件卸载时执行：
+
+```js
+watch(
+  () => toValue(userId),
+  async (id, _oldId, onCleanup) => {
+    let cancelled = false
+    onCleanup(() => {
+      cancelled = true // 这次结果作废
+    })
+    const data = id ? await api.getUser(id) : null
+    if (!cancelled) user.value = data
+  },
+  { immediate: true }
+)
+```
+
+请求库支持取消时，在清理函数里直接调用 `controller.abort()` 更好，连网络请求都省了。
+
+## 8. 把外部依赖当作参数传入
+
+组合式函数里直接 `import` 具体的接口模块，测试时就很难替换。把依赖作为参数传进来，测试时传入假数据即可：
+
+```js
+export function useList(fetcher) {
+  const items = ref([])
+  const loading = ref(false)
+
+  async function load() {
+    loading.value = true
+    try {
+      items.value = await fetcher()
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { items, loading, load }
+}
+
+// 组件里
+const { items, load } = useList(() => api.listMembers({ status: 'active' }))
+```
+
+## 9. 什么时候该抽成组合式函数
+
+适合抽取：
+
+- 同一组“状态 + 行为”在两个以上的组件里出现；
+- 逻辑可以独立存在，有清晰的输入和输出，比如分页、表单提交、窗口尺寸、倒计时。
+
+不必抽取：
+
+- 只有一个组件用、逻辑很简单：直接写在 `<script setup>` 里更好读；
+- 跨很多页面共享、需要调试追踪的业务状态：用 Pinia。
+
+## 排查思路
+
+1. **看控制台警告**：`no active component instance` 说明钩子注册的时机不对，去找前面的 `await`。
+2. **状态意外共享**：检查组合式函数文件里，`ref` / `reactive` 是不是写在了函数外面。
+3. **数据不更新**：确认传进组合式函数的是 getter / ref，而不是读取出来的普通值。
+4. **事件触发多次**：用 Elements 面板的 Event Listeners 看 `window` 上挂了几个同名监听器。
+5. 在 Vue Devtools 里选中组件，查看组合式函数返回的状态是否符合预期。
+
+## 检查清单
+
+- [ ] 以 `use` 开头命名，文件名和函数名一致
+- [ ] 生命周期钩子、`watch` 在第一个 `await` 之前注册
+- [ ] 需要独立状态的 `ref` 写在函数内部
+- [ ] 接收可能变化的参数时，支持 ref / getter，并用 `toValue` 读取
+- [ ] 返回 ref / computed 本身，而不是 `.value`
+- [ ] 异步请求在参数变化时作废或取消旧结果
+- [ ] 外部依赖通过参数传入，方便测试
+
+## 延伸阅读
+
+- [闭包与作用域](/web/JavaScript/closure)：组合式函数里的状态为什么能“记住”
+- [Pinia 状态管理](/web/vue/pinia)：需要全局共享时的选择
+- [Vue 组件测试](/web/vue/testing)：如何测试组合式函数
