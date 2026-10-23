@@ -83,28 +83,28 @@
           </a>
           <a class="shelf-card shelf-card--js" href="/web/JavaScript/ES6">
             <span class="shelf-card__mark">WEB</span>
-            <span class="shelf-card__meta">8 篇 · 语言与界面</span>
+            <span class="shelf-card__meta">20 篇 · 语言与界面</span>
             <h3>前端基础</h3>
             <p>从 JavaScript、浏览器和 CSS 起步，建立对页面运行、状态变化和响应式布局的可靠直觉。</p>
             <span class="shelf-card__link">阅读前端基础 <i aria-hidden="true">→</i></span>
           </a>
           <a class="shelf-card shelf-card--vue" href="/web/vue/component-design">
             <span class="shelf-card__mark">APP</span>
-            <span class="shelf-card__meta">7 篇 · 组件与体验</span>
+            <span class="shelf-card__meta">21 篇 · 组件与体验</span>
             <h3>前端应用</h3>
             <p>把组件边界、路由状态、请求层与加载体验组织成用户真正能完成任务的页面，并覆盖跨端环境的排查经验。</p>
             <span class="shelf-card__link">阅读前端应用 <i aria-hidden="true">→</i></span>
           </a>
           <a class="shelf-card shelf-card--server" href="/backend/overview">
             <span class="shelf-card__mark">API</span>
-            <span class="shelf-card__meta">7 篇 · 服务与接口</span>
+            <span class="shelf-card__meta">10 篇 · 服务与接口</span>
             <h3>后端与接口</h3>
             <p>梳理请求如何穿过认证、业务服务和数据层，并让错误、权限与资源模型有一致语义。</p>
             <span class="shelf-card__link">阅读后端笔记 <i aria-hidden="true">→</i></span>
           </a>
           <a class="shelf-card shelf-card--data" href="/engineering/toolchain">
             <span class="shelf-card__mark">FLOW</span>
-            <span class="shelf-card__meta">6 篇 · 协作与交付</span>
+            <span class="shelf-card__meta">10 篇 · 协作与交付</span>
             <h3>数据与工程化</h3>
             <p>从工程化地图、提交边界到测试、发布与可观测性，把“能运行”推进到“可长期维护”。</p>
             <span class="shelf-card__link">阅读工程化笔记 <i aria-hidden="true">→</i></span>
@@ -123,7 +123,7 @@
         <div class="recent-intro">
           <p class="field-kicker">START WITH A QUESTION</p>
           <h2 id="recent-title">从一个真实问题开始</h2>
-          <p>每篇文章都先明确判断边界，再给出可以复用的实现方式和检查清单。</p>
+          <p>每篇文章都从一个真实问题出发：先讲现象和原理，再给出踩坑记录、排查思路和检查清单。</p>
         </div>
         <div class="recent-list">
           <a href="/practice/h5-layout-readiness">
