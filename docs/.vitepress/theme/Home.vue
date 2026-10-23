@@ -97,7 +97,7 @@
           </a>
           <a class="shelf-card shelf-card--server" href="/backend/overview">
             <span class="shelf-card__mark">API</span>
-            <span class="shelf-card__meta">10 篇 · 服务与接口</span>
+            <span class="shelf-card__meta">11 篇 · 服务与接口</span>
             <h3>后端与接口</h3>
             <p>梳理请求如何穿过认证、业务服务和数据层，并让错误、权限与资源模型有一致语义。</p>
             <span class="shelf-card__link">阅读后端笔记 <i aria-hidden="true">→</i></span>

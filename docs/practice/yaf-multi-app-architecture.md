@@ -352,3 +352,4 @@ class CreateDemoOrderService
 - [多端系统全景图](/practice/full-stack-system-map)：一次需求会经过哪些层
 - [旧系统渐进改造](/practice/legacy-modernization-roadmap)：改造的整体路线
 - [后端服务如何组织](/backend/overview)：控制器与业务服务的分工
+- [如何学习 PHP：从 0 到 1 做一个项目](/backend/php-from-zero)：先用一个小项目打好 PHP 基础
