@@ -1,150 +1,265 @@
 ---
 title: 错误处理与异常
-description: 区分程序错误和操作错误，在合适的层级捕获和上报，而不是到处 try/catch。
+description: 错误像烫手山芋沿调用栈往上传，谁能处理谁接住。讲清何时 throw、何时 catch，修复吞异常、误报网络错误、丢失堆栈、异步错误抓不到和线上只看到 Script error 等问题。
 ---
 
 # 错误处理与异常
 
-错误处理的难点不在语法，而在"什么时候该 throw、什么时候该 catch、什么时候让它继续冒泡"。到处写 try/catch 是新手最常见的反应，结果是错误被悄悄吃掉，bug 反而更难查。
+错误处理写得不好，会出现两种极端：
 
-## 先分清两类错误
+- **错误被悄悄吞掉**：点了保存没反应，控制台干干净净，开发者根本无从查起；
+- **错误没人接**：一个小组件出错，整个页面白屏。
 
-| 类型 | 含义 | 处理方式 |
+还有更隐蔽的：把自己的代码 bug 当成“网络错误，请重试”提示给用户，用户重试一百次也没用，开发者还以为是网络问题。
+
+这篇讲清错误是怎么传递的、应该在哪一层处理，以及线上排查错误的实用技巧。
+
+::: tip 读完这篇你会
+- 说清 `throw` 之后发生了什么，判断错误该在哪一层处理
+- 避开吞异常、`try` 范围过大、丢失原始堆栈、异步错误抓不到等坑
+- 搭好全局兜底和上报，让线上错误“看得见、查得到”
+:::
+
+## 1. 原理：错误沿着调用栈往上传
+
+`throw` 会立刻中断当前函数，然后把错误交给调用它的函数；调用方没有 `try/catch` 就继续往上交，一直到有人接住，或者到达最顶层变成“未捕获错误”。
+
+```text
+render()          ← throw new Error('数据格式错误')
+  ↑ 没接，继续往上
+loadPage()
+  ↑ 没接，继续往上
+onRouteChange()   ← try/catch 在这里接住，显示错误页
+```
+
+可以把它想成公司里的问题上报：员工搞不定就报给组长，组长搞不定再报给经理。**谁有能力处理、谁能给用户一个交代，谁就接住；其他人可以补充情况再往上报，但不能压着不报。**
+
+## 2. 先分清两类错误
+
+| 类型 | 例子 | 应该怎么办 |
 | --- | --- | --- |
-| 程序错误（Programmer Error） | 代码写错了：传了 null 给必填参数、调用了不存在的 API | 不应捕获，让它快速失败暴露问题 |
-| 操作错误（Operational Error） | 运行时可能发生的事：网络断开、文件不存在、超时 | 预期处理：重试、降级、提示用户 |
+| **程序错误**（代码写错了） | 读取 `undefined` 的属性、参数类型不对、调用了不存在的方法 | 不要吞掉，让它尽早暴露并上报，修代码 |
+| **操作错误**（运行时可能发生） | 网络断开、接口超时、用户无权限、文件不存在 | 预期内处理：重试、降级、给用户明确提示 |
 
-把这两类混为一谈是大多数错误处理灾难的根源。程序错误不该被 catch 后默默吞掉——你希望它早点炸出来，好在开发阶段就发现。
+大多数错误处理的混乱，都来自把这两类混为一谈：把程序错误当操作错误处理（提示用户“请重试”），或者把操作错误当程序错误（网络抖一下就白屏）。
 
-## Error 类型与 throw 的代价
+## 3. 用自定义错误区分类型
 
-JavaScript 内置了 `Error`、`TypeError`、`RangeError`、`SyntaxError` 等。自定义错误时继承 `Error` 并附上业务字段，方便上层按类型分流：
+继承 `Error` 并加上业务字段，上层就能按类型分流处理：
 
 ```js
-class ValidationError extends Error {
-  constructor(field, message) {
-    super(message)
-    this.name = 'ValidationError'
-    this.field = field
-  }
-}
-
-class NetworkError extends Error {
-  constructor(status) {
-    super(`request failed: ${status}`)
-    this.name = 'NetworkError'
+class HttpError extends Error {
+  constructor(status, message, options) {
+    super(message, options) // options 里可以传 { cause }
+    this.name = 'HttpError'
     this.status = status
   }
 }
-```
 
-> `throw` 会打断当前执行并展开调用栈，性能开销不小。不要用它做常规的流程控制（"找不到就用 throw 跳出去"），那会让代码难以理解和调试。
-
-## try/catch 的范围要小
-
-`try` 块包得越大，越容易误抓本不该处理的异常。理想做法是只包住"可能失败的那一行"，并在 catch 里判断是不是预期错误：
-
-```js
-// 反例：包了一大坨，连打日志的错都被吃掉
-try {
-  const data = await load()
-  render(data)
-  trackEvent('loaded')
-} catch (e) {}
-
-// 正例：只包真正可能失败的步骤
-let data
-try {
-  data = await load()
-} catch (e) {
-  showError('加载失败，请重试')
-  return
+async function request(url) {
+  const res = await fetch(url)
+  if (!res.ok) throw new HttpError(res.status, `请求失败：${res.status}`)
+  return res.json()
 }
-render(data)
-```
 
-空 catch 是最危险的代码之一。抓了又不处理、不上报、不重新抛出，等于把 bug 埋进土里。
-
-## 错误冒泡与"在能处理的层处理"
-
-错误会沿调用栈向上传播，直到被某个 catch 捕获。判断原则：**谁有能力处理这个错误、谁能给出用户可感知的反馈，谁就处理；其余层只负责补充上下文后重新抛出。**
-
-```js
-async function getUser(id) {
-  try {
-    return await api.get(`/users/${id}`)
-  } catch (e) {
-    // 这里只是补充上下文，不当数据用
-    throw new Error(`获取用户 ${id} 失败: ${e.message}`)
+try {
+  await request('/api/profile')
+} catch (error) {
+  if (error instanceof HttpError && error.status === 401) {
+    goLogin() // 操作错误：登录过期，带用户去登录
+  } else {
+    throw error // 其他情况自己处理不了，继续往上交
   }
 }
 ```
 
-不要在每一层都写 catch。中间层 catch 后又 throw 一个新 Error 是常见做法，但保留原始 stack 才好排查：
+## 4. 坑一：空 `catch`，错误被埋进土里
+
+**现象**：用户反馈“点保存没反应”，开发者打开控制台，没有任何报错，也没有任何请求失败。
+
+```js
+try {
+  await saveDraft()
+} catch (e) {} // ❌ 抓到了，然后什么都没做
+```
+
+**原因**：错误被接住后既没处理、没提示，也没上报。对用户和开发者来说，它从来没发生过。
+
+**修复**：`catch` 里至少做一件事——处理、上报或重新抛出。
+
+```js
+try {
+  await saveDraft()
+} catch (error) {
+  showToast('保存失败，请稍后重试')
+  reportError(error, { action: 'saveDraft' }) // 让开发者也知道
+}
+```
+
+**怎么避免再犯**：开启 ESLint 的 `no-empty` 规则（空代码块报警）。代码评审时，看到 `catch (e) {}`、`catch (e) { return null }` 都要问一句：出错后谁会知道？
+
+## 5. 坑二：`try` 包得太大，把自己的 bug 当成网络错误
+
+**现象**：页面一直提示“网络错误，请重试”，可是 Network 面板里请求明明是成功的。
+
+```js
+try {
+  const data = await fetchList()
+  renderList(data) // renderList 里有个 bug，读了 undefined 的属性
+} catch (e) {
+  showToast('网络错误，请重试') // ❌ 渲染 bug 也被当成了网络错误
+}
+```
+
+**原因**：`try` 块里既有“可能失败的请求”，也有“不该失败的渲染代码”。渲染代码的 bug 被同一个 `catch` 接住，并被错误地归类。
+
+**修复**：`try` 只包住真正可能失败的那一步。
+
+```js
+let data
+try {
+  data = await fetchList()
+} catch (error) {
+  showToast('网络错误，请重试')
+  return
+}
+renderList(data) // 这里出 bug 会正常抛出，被全局兜底上报
+```
+
+**怎么避免再犯**：写 `catch` 前先想清楚“我预期会发生什么错误”，提示文案只描述那一种。
+
+## 6. 坑三：包装错误时，把原始堆栈丢了
+
+**现象**：线上上报的错误只有一句“加载用户失败: Unexpected token < in JSON”，看不出是哪个文件哪一行出的问题。
 
 ```js
 catch (e) {
-  const wrapped = new Error('用户加载失败')
-  wrapped.cause = e // ES2022，保留原错误链
-  throw wrapped
+  throw new Error(`加载用户失败: ${e.message}`) // ❌ 只保留了 message，原始堆栈丢了
 }
 ```
 
-## 全局错误捕获：最后的安全网
+**原因**：新建的 `Error` 有自己的堆栈，指向这一行 `throw`；原始错误的堆栈（真正出问题的位置）被丢弃了。
 
-页面总有漏网的错误。`window.onerror` 和 `unhandledrejection` 是兜底，主要用途是**上报**，而不是"修复"：
+**修复**：用 ES2022 的 `cause` 把原始错误挂上去，形成一条错误链：
+
+```js
+catch (e) {
+  throw new Error('加载用户失败', { cause: e }) // ✅ 原始错误保留在 error.cause 里
+}
+```
+
+Chrome 控制台打印这类错误时会同时显示原因；上报时把 `error.cause` 一起带上即可。
+
+## 7. 坑四：异步代码里的错误，外面的 `try` 抓不到
+
+**现象**：明明包了 `try/catch`，控制台还是出现 `Uncaught Error` 或 `Uncaught (in promise)`。
+
+```js
+try {
+  setTimeout(() => {
+    throw new Error('定时器里出错') // ❌ 外面的 catch 抓不到
+  }, 0)
+} catch (e) {}
+
+try {
+  saveDraft() // ❌ 忘了 await，返回的 Promise 失败时 catch 抓不到
+} catch (e) {}
+```
+
+**原因**：`try/catch` 只能接住**同一段同步执行过程**里抛出的错误。定时器回调是之后在另一个任务里执行的，那时 `try` 早已结束；没有 `await` 的 Promise 失败也一样，错误发生时 `try` 已经执行完了。
+
+**修复**：在回调内部处理，或者 `await` 这个 Promise：
+
+```js
+setTimeout(() => {
+  try {
+    doWork()
+  } catch (error) {
+    reportError(error)
+  }
+}, 0)
+
+try {
+  await saveDraft() // ✅ 等它完成，失败时才会进入 catch
+} catch (error) {
+  showToast('保存失败')
+}
+```
+
+**怎么避免再犯**：开启 TypeScript ESLint 的 `no-floating-promises` 规则，它会标出所有“返回了 Promise 却没人等待和处理”的调用。
+
+## 8. 坑五：抛出的不是 `Error` 对象
+
+**现象**：上报平台里一堆错误显示为 `undefined`，或者只有一行字，没有堆栈。
+
+```js
+throw '余额不足'                       // ❌ 字符串没有 stack
+return Promise.reject({ code: 1001 }) // ❌ 普通对象也没有 stack
+```
+
+**修复**：永远抛出 `Error`（或它的子类）实例，需要的业务信息挂在属性上：
+
+```js
+const error = new Error('余额不足')
+error.code = 'INSUFFICIENT_BALANCE'
+throw error
+```
+
+## 9. 全局兜底：最后一道安全网
+
+总会有没被接住的错误。全局监听的主要用途是**上报**，让你知道线上发生了什么：
 
 ```js
 window.addEventListener('error', (event) => {
-  reportToServer({
-    type: 'error',
-    message: event.message,
-    filename: event.filename,
-    line: event.lineno,
-    stack: event.error?.stack
-  })
+  reportError(event.error ?? event.message, { source: 'window.error' })
 })
 
 window.addEventListener('unhandledrejection', (event) => {
-  reportToServer({ type: 'unhandledrejection', reason: event.reason })
+  reportError(event.reason, { source: 'unhandledrejection' })
 })
-```
 
-> 上报要采样、去重、限流，否则一个未捕获的 Promise 在循环里能瞬间打爆日志服务。
-
-## 上报策略
-
-| 维度 | 建议 |
-| --- | --- |
-| 采样率 | 高频错误降采样，低频错误全量 |
-| 去重 | 同一 stack + message 在短时间内只报一次 |
-| 上下文 | 带 URL、用户态、版本号、最近一次操作 |
-| 用户反馈 | 严重错误提供"上报问题"入口 |
-
-## 不要吞异常的几种典型反例
-
-```js
-// 反例 1：空 catch
-try { doSomething() } catch (e) {}
-
-// 反例 2：只 console 不上报
-catch (e) { console.log(e) }
-
-// 反例 3：返回假数据假装成功
-catch (e) { return null } // 调用方无法区分"真没数据"还是"出错了"
-
-// 反例 4：把程序错误当操作错误处理
-function add(a, b) {
-  try { return a + b } catch (e) { return 0 } // 参数错误本不该发生
+// Vue 3：组件渲染、生命周期、事件处理中的错误
+app.config.errorHandler = (error, instance, info) => {
+  reportError(error, { source: 'vue', info })
 }
 ```
 
-记住一条原则：**让失败可见**。处理不了的错误就让它冒泡到全局兜底；能处理的就给出明确结果；介于两者之间的，至少要留下日志。
+上报时注意：
 
-## 检查表
+- **去重和限流**：同一个错误在循环里触发，一分钟能上报几万次，把日志服务打垮。
+- **带上下文**：页面地址、版本号、用户操作，否则只有一行堆栈很难复现。
+- **用 Source Map 还原堆栈**：线上代码被压缩过，堆栈是 `a.js:1:23456`。把 Source Map 上传到监控平台，而不是公开部署到线上。
 
-- 区分程序错误（让它炸）和操作错误（预期处理），别混为一谈。
-- try 块尽量小，只包住真正可能失败的代码。
-- 不要写空 catch；要么处理、要么上报、要么重新抛出。
-- 中间层捕获后用 `cause` 保留原始错误链，别丢掉 stack。
-- 全局兜底要采样去重，主要用途是上报而非"修复"。
+::: warning 线上只看到 “Script error.”
+如果脚本放在另一个域名的 CDN 上，出于安全限制，浏览器只会告诉页面 “Script error.”，没有文件、行号和堆栈。解决办法是 `<script>` 加上 `crossorigin="anonymous"`，同时 CDN 返回 `Access-Control-Allow-Origin` 响应头。
+:::
+
+## 10. 给用户的信息和给开发者的信息分开
+
+- **给用户**：说人话，告诉他能做什么——“网络不稳定，请稍后重试”“登录已过期，请重新登录”。不要展示堆栈和英文报错。
+- **给开发者**：完整的错误对象、堆栈、`cause`、请求参数、请求 ID。
+
+两者用同一个错误对象承载，在展示层和上报层分别取用即可。
+
+## 排查思路：错误被吞了怎么找
+
+1. 打开 DevTools 的 Sources 面板，在右侧 Breakpoints 区域勾选 **Pause on caught exceptions**（在被捕获的异常处也暂停）。
+2. 重新操作一遍。哪怕错误被某个 `catch` 吞掉，调试器也会停在**抛出错误的那一行**。
+3. 看 Call Stack，一层层往上找到吞掉它的 `catch`。
+4. 线上问题：在监控平台按错误信息聚合，看首次出现时间是否和某次发布吻合；再用 Source Map 定位到源码行。
+
+## 检查清单
+
+- [ ] 没有空 `catch`，每个 `catch` 都处理、上报或重新抛出
+- [ ] `try` 只包住预期会失败的步骤，提示文案和错误类型匹配
+- [ ] 包装错误时用 `{ cause }` 保留原始错误
+- [ ] 异步调用都被 `await` 或显式处理
+- [ ] 只抛出 `Error` 实例
+- [ ] 有全局错误兜底，上报带去重、限流和上下文
+- [ ] 跨域脚本加了 `crossorigin`，Source Map 只上传到监控平台
+
+## 延伸阅读
+
+- [异步流程与 Promise](/web/JavaScript/async)：错误在 Promise 链中如何传递
+- [错误处理与请求追踪](/backend/error-handling)：服务端如何返回可排查的错误
+- [日志、指标与可观测性](/engineering/observability)：错误上报之后怎么分析

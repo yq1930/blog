@@ -43,7 +43,10 @@ body { background: var(--field-paper); }
 .VPDoc .content code { color: #a64434; background: #f0ebe1; }
 .VPDoc .content div[class*='language-'] { border: 1px solid rgba(24, 51, 61, 0.12); box-shadow: none; }
 .VPDoc .content blockquote { color: #496269; border-left-color: var(--field-coral); background: rgba(212, 93, 69, 0.055); }
-.VPDoc .content table { display: table; width: 100%; }
+/* 宽屏铺满正文；窄屏沿用 VitePress 默认的表格内横向滚动，避免含长代码的表格撑宽页面 */
+@media (min-width: 768px) {
+  .VPDoc .content table { display: table; width: 100%; }
+}
 .VPButton.brand { border-color: var(--field-tide); color: #fff; background: var(--field-tide); }
 .VPButton.brand:hover { border-color: #0e666b; background: #0e666b; }
 

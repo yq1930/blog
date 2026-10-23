@@ -1,119 +1,183 @@
 ---
 title: SSR 与 Nuxt 入门
-description: 理解 SSR、SSG、SPA 的差别，知道什么时候该用、什么时候纯属增加复杂度。
+description: 用“先看样板间照片、再接通水电”理解服务端渲染和注水（hydration），讲清何时选 SSR、SSG 或 SPA，并修复 window is not defined、注水不匹配、时区导致日期差 8 小时、数据请求两次、不同用户数据串号等问题。
 ---
 
 # SSR 与 Nuxt 入门
 
-服务端渲染（SSR）不是银弹。它在某些场景下能显著改善体验，但代价是构建、部署、调试的全部复杂度上升。先用对工具，再决定要不要 SSR。
+服务端渲染（SSR）能让首屏更快、对搜索引擎更友好，但它同时让构建、部署和调试都变复杂了。第一次做 SSR 的人，几乎都会遇到这些问题：
 
-## 先搞清楚三种渲染模式
+- 服务器启动就报 `window is not defined`；
+- 控制台出现 `Hydration mismatch` 警告；
+- 页面上的时间在服务器渲染时和浏览器里差了 8 小时；
+- 同一个接口在服务器请求了一次，浏览器又请求了一次；
+- 最危险的：用户 A 的页面上出现了用户 B 的名字。
 
-| 模式 | HTML 由谁生成 | 首屏速度 | SEO | 适合 |
-| --- | --- | --- | --- | --- |
-| SPA | 浏览器 JS 运行时 | 慢（要等 JS 下载执行） | 差（初始 HTML 几乎空） | 后台管理系统、需要登录的工具型应用 |
-| SSR | 服务器每次请求生成 | 快 | 好 | 内容频繁更新、强 SEO、个性化内容（电商、新闻） |
-| SSG | 构建时预先生成 | 最快 | 好 | 博客、文档、营销页（内容不常变） |
+::: tip 读完这篇你会
+- 说清 SSR 的完整流程和“注水”（hydration）是什么
+- 根据业务选择 SPA、SSR 或 SSG
+- 写出能同时在服务器和浏览器运行的代码，避开上面这些坑
+:::
 
-> SPA 也不是 SEO 必然差——现代爬虫（Google）能执行 JS，但百度、社交分享抓取仍依赖初始 HTML。要不要 SSR/SSG，先看你的流量来源。
+## 1. 原理：先给照片，再接通水电
 
-## 为什么用 SSR
+SSR 的过程可以分成两段：
 
-SSR 的核心收益是**首屏 HTML 直接可见**，用户不需要等 JS 下载、解析、执行完才看到内容。次要收益是 SEO 和社交分享（Open Graph、Twitter Card 抓的是 HTML）。
-
-它带来的成本：
-
-- 需要一个 Node 服务器（或 Edge Runtime）持续运行。
-- 代码必须能在 Node 环境跑——`window`、`document`、`localStorage` 都不能在服务端直接用。
-- 部署复杂度上升：不能直接扔到静态主机或 Nginx。
-- 调试链路变长：报错可能来自服务端或客户端。
-
-## 同构代码：window/document 是第一道坎
-
-同一份代码会在服务器和浏览器都跑一遍。任何对浏览器 API 的直接引用，在服务端会爆炸：
-
-```js
-// 反例：服务端立即执行就崩
-const width = window.innerWidth
-
-// 正例：用生命周期或判断环境
-import { onMounted } from 'vue'
-
-onMounted(() => {
-  // 只在浏览器执行
-  const width = window.innerWidth
-})
-
-// 或显式判断
-if (typeof window !== 'undefined') {
-  // 浏览器专属逻辑
-}
+```text
+① 服务器：收到请求 → 运行 Vue 应用、获取数据 → 生成完整的 HTML → 返回给浏览器
+② 浏览器：立刻显示这份 HTML（用户已经能看到内容）
+          → 下载 JS → Vue 在已有的 DOM 上绑定事件、建立响应式（注水 hydration）→ 页面可以交互
 ```
 
-> `onMounted` 只在客户端触发，是放浏览器 API 调用最安全的位置。`created` / `setup` 顶层会在服务端执行，那里别碰 DOM。
+可以把它想成买房看样板间：服务器先给你一张装修好的**照片**（HTML），你马上就能看到房子长什么样；随后施工队（JS）进场，把水电接通（注水），房子才能真正使用。
 
-## 数据预取：决定首屏是否"真快"
+这里有个前提：**施工队手上的图纸必须和照片一致**。如果浏览器上渲染出来的结构和服务器给的 HTML 对不上，Vue 就会报“注水不匹配”，并可能丢弃服务器的结果重新渲染。很多 SSR 的坑都来自这一点。
 
-SSR 真正快的前提是**服务端把数据也取好，渲染进 HTML**。如果服务端只渲染骨架，数据全靠客户端 `onMounted` 再取，那和 SPA 没本质区别，只是多了服务端这一跳。
+## 2. 三种渲染方式怎么选
 
-Nuxt 里用 `useFetch` / `useAsyncData` 在服务端预取：
+| 方式 | HTML 在哪里生成 | 首屏 | SEO | 适合 |
+| --- | --- | --- | --- | --- |
+| SPA | 浏览器里，由 JS 生成 | 要等 JS 下载执行 | 差 | 后台管理、需要登录的工具 |
+| SSR | 服务器，每次请求时 | 快 | 好 | 内容经常变化且需要被搜索：电商、资讯 |
+| SSG | 构建时预先生成 | 最快 | 好 | 内容不常变：博客、文档、官网 |
+
+几个判断问题：
+
+- 页面需要被搜索引擎收录、或者需要正确的分享卡片吗？不需要的话，SPA 最简单；
+- 内容多久变一次？构建时就能确定的，用 SSG；每次请求都可能不同的，用 SSR；
+- 团队有能力维护一个长期运行的 Node 服务吗？SSR 不能像 SPA 那样直接扔到静态托管上。
+
+纯静态的内容站点（比如这个博客）用 VitePress 更省心；需要在一个项目里混合 SSR、SSG 和 SPA 时，Nuxt 的价值才真正体现出来。
+
+## 3. 坑一：服务器报 `window is not defined`
+
+**现象**：本地 SPA 开发时一切正常，接入 SSR 后，服务器一启动或一渲染页面就报错 `ReferenceError: window is not defined`（也可能是 `document`、`localStorage`）。
+
+**原因**：同一份组件代码会在服务器（Node.js）上运行一次。Node.js 里没有浏览器的 `window`、`document`、`localStorage`。`setup` 顶层的代码、`created` 钩子都会在服务器上执行。
+
+**修复**：
+
+```js
+import { onMounted } from 'vue'
+
+// ❌ setup 顶层，服务器上也会执行
+const width = window.innerWidth
+
+// ✅ onMounted 只在浏览器里执行
+onMounted(() => {
+  width.value = window.innerWidth
+})
+```
+
+第三方库在**被导入时**就访问 `window` 的，放在 `onMounted` 里也没用，因为 `import` 在文件开头就执行了。这时要在浏览器端动态导入：
+
+```js
+onMounted(async () => {
+  const { default: Editor } = await import('some-browser-only-editor')
+  editor = new Editor(el.value)
+})
+```
+
+Nuxt 里还可以用 `import.meta.client` 判断当前环境，或者用 `<ClientOnly>` 组件包住只在浏览器渲染的部分，用 `.client.js` 后缀的插件只在浏览器加载。
+
+## 4. 坑二：注水不匹配，时间差了 8 小时
+
+**现象**：控制台出现 `Hydration text content mismatch`；页面上的“发布时间”刚打开时显示 `02:00`，一闪变成了 `10:00`。
+
+**原因**：服务器和浏览器渲染出的内容不一样：
+
+- 服务器运行在 UTC 时区，浏览器在北京时间（UTC+8），同一个时间戳格式化出来差了 8 小时；
+- 渲染时用了 `Date.now()`、`Math.random()`，两边结果不同；
+- 渲染时读取了 `localStorage` 里的值，服务器上没有。
+
+**修复**：
+
+- 格式化时间时**明确指定时区**，让两边结果一致：
+
+```js
+const formatted = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  dateStyle: 'medium',
+  timeStyle: 'short'
+}).format(new Date(article.publishedAt))
+```
+
+- 随机值、当前时间等由服务器生成一次，随数据一起传给浏览器复用；
+- 依赖浏览器环境的内容（如“根据本地存储显示的个性化内容”），用 `<ClientOnly>` 包起来，只在浏览器渲染。
+
+## 5. 坑三：同一个接口请求了两次
+
+**现象**：Network 面板里，页面加载时又请求了一次文章接口，可文章内容明明已经在服务器返回的 HTML 里了。
+
+**原因**：在 `setup` 里直接用 `fetch` / `$fetch` 获取数据，这段代码在服务器执行一次，到浏览器注水时又执行一次。
+
+**修复**：Nuxt 里用 `useFetch` 或 `useAsyncData`。它们在服务器上获取数据后，会把结果序列化进 HTML；浏览器注水时直接复用这份数据，不再重复请求：
 
 ```vue
 <script setup>
-const { data: article } = await useFetch(`/api/articles/${id}`)
+const route = useRoute()
+const { data: article, error } = await useFetch(`/api/articles/${route.params.id}`)
 </script>
 ```
 
-它们会在服务端执行一次拿到数据，序列化进 HTML，客户端 hydration 时直接复用，不会重复请求。
+SSR 真正快的前提，就是**数据在服务器上就取好、和 HTML 一起返回**。如果服务器只渲染了一个空骨架、数据仍在浏览器里请求，那和 SPA 相比几乎没有优势。
 
-## Hydration：把静态 HTML 接回响应式
+## 6. 坑四：用户 A 看到了用户 B 的数据
 
-服务端输出的 HTML 是静态的，没有事件绑定、没有响应式。客户端 JS 加载后，Vue 会"注水（hydrate）"——在已有 DOM 节点上附加事件监听和响应式系统，而不是重新渲染。
+**现象**：线上偶发事故：某个用户打开页面，右上角显示的却是另一个人的昵称。
 
-hydration 要求**服务端和客户端渲染出结构一致的 DOM**。否则 Vue 会警告并回退到重新渲染，浪费一次开销。常见踩坑：
+**原因**：在服务器上，**同一个 Node 进程会同时处理很多用户的请求**。如果把用户信息存在模块顶层的变量里：
 
-- 用了 `Date.now()`、`Math.random()`，两端结果不一致。
-- 用了 `localStorage` 里的值，服务端没有。
-- 用了只在浏览器生效的第三方库改了 DOM。
+```js
+// ❌ 模块顶层：服务器上所有请求共享这一个变量
+export const currentUser = ref(null)
+```
 
-> 把"依赖客户端环境"的渲染逻辑包在 `<ClientOnly>` 里，让它在 hydration 后才出现。
+A 的请求刚把 `currentUser` 设成 A，B 的请求又把它改成了 B，A 的页面渲染时读到的就是 B。在浏览器里这样写没问题（一个浏览器只有一个用户），到了服务器就成了严重的数据泄露。
 
-## 什么时候 SSR、SSG、SPA
+**修复**：所有和请求相关的状态都必须**按请求隔离**：
 
-具体决策参考：
+- Nuxt 里用 `useState('current-user', () => null)` 代替模块顶层的 `ref`，它在每个请求中是独立的；
+- Pinia 在 Nuxt 中会为每个请求创建新实例，按 store 的方式使用即可；
+- 自己搭建 SSR 时，每个请求都要创建新的应用实例、新的 router 和新的 store。
 
-- **博客、文档、营销官网、个人主页**：SSG。内容稳定、SEO 重要、部署简单（纯静态）。
-- **电商、新闻、社交、社区**：SSR（或 SSR + SPA 混合）。内容更新频繁、SEO 重要、有个性化数据。
-- **后台管理系统、内部工具、设计工具、编辑器**：SPA。SEO 不重要、登录后使用、交互复杂。
-- **混合**：首页 SSG、动态页 SSR、管理后台 SPA，可以在一个项目里共存（Nuxt 支持）。
+**怎么避免再犯**：SSR 项目里，审查所有“写在函数外面的可变状态”。
 
-## Nuxt 的选择
-
-Nuxt 3 把这三种模式做成可配置项，默认 SSR：
+## 7. Nuxt 的渲染配置
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  ssr: true // 默认。设为 false 变成 SPA 模式
+  ssr: true, // 默认开启；设为 false 则整个项目变成 SPA
+  routeRules: {
+    '/': { prerender: true },          // 首页构建时预渲染（SSG）
+    '/blog/**': { prerender: true },   // 博客文章预渲染
+    '/admin/**': { ssr: false }        // 后台只在浏览器渲染（SPA）
+  }
 })
 ```
 
-按路由粒度选择渲染模式：
+`routeRules` 可以按路由选择渲染方式，一个项目里混合使用 SSR、SSG 和 SPA。
 
-```ts
-// 某些路由用 SSG（构建时预渲染）
-defineRouteRules({
-  '/about': { prerender: true },
-  '/admin/**': { ssr: false } // 后台用 SPA
-})
-```
+## 排查思路
 
-> 不要为了"用 Nuxt"而用 Nuxt。纯 SPA 的项目用 Vite + Vue Router 更轻；纯静态内容站点用 VitePress 比 Nuxt 更省心。Nuxt 的价值在于"同一个项目里灵活混合 SSR/SSG/SPA"。
+1. **看服务器返回的 HTML**：右键“查看网页源代码”。内容在源代码里，说明服务器渲染生效了；源代码里只有空容器，说明数据或组件没在服务器上渲染。
+2. **注水警告**：开发环境的控制台会指出不匹配的具体元素和内容，对照“服务器和浏览器有什么不同”（时间、随机数、本地存储、屏幕尺寸）去找。
+3. **`window is not defined`**：看报错堆栈来自哪个文件。如果来自 `node_modules` 里的库，就是导入时访问了浏览器 API，需要改成浏览器端动态导入。
+4. **数据串号**：在服务器日志里打印每个请求的请求 ID 和用户 ID，检查是否有模块级的可变状态。
+5. **重复请求**：Network 面板里查看页面加载时浏览器发出的请求，和服务器已经获取过的数据对比。
 
-## 检查表
+## 检查清单
 
-- 先判断流量来源、内容更新频率、是否需要登录，再决定渲染模式。
-- SSR 代码里所有浏览器 API 调用放进 `onMounted` 或 `ClientOnly`。
-- 关键数据用 `useFetch` / `useAsyncData` 在服务端预取，别只渲染骨架。
-- 警惕 hydration mismatch：避免在渲染中使用 `Date.now()`、随机值、客户端专属数据。
-- 部署前确认服务器环境（Node 版本、内存、冷启动），SSR 不是扔上静态主机就完事。
+- [ ] 根据 SEO 需求、内容更新频率和团队运维能力选择渲染方式
+- [ ] 浏览器 API 只在 `onMounted`、`<ClientOnly>` 或浏览器端动态导入中使用
+- [ ] 时间格式化指定时区，渲染中不使用随机值和本地存储
+- [ ] 首屏数据通过 `useFetch` / `useAsyncData` 在服务器获取
+- [ ] 没有模块顶层的、按请求变化的可变状态
+- [ ] 部署前确认服务器的 Node 版本、内存和进程守护方案
+
+## 延伸阅读
+
+- [前端与 SEO](/web/frontend/seo)：为什么搜索引擎需要服务器渲染的 HTML
+- [Pinia 状态管理](/web/vue/pinia)：SSR 下 store 的隔离
+- [从 VuePress 到 VitePress](/web/vue/vuepress)：静态生成的另一种选择

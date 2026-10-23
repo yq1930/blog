@@ -1,128 +1,177 @@
 ---
 title: 现代 CSS 选择器
-description: 用好 :is/:where/:has 和属性选择器，同时搞懂特异性，别让选择器失控。
+description: 用好 :is、:where、:has、:focus-visible 和属性选择器，同时避开 :is 抬高优先级、nth-child 数错、手机上 hover 粘住、去掉焦点框等常见坑。
 ---
 
 # 现代 CSS 选择器
 
-选择器是 CSS 表达"哪些元素该应用样式"的语言。写得清楚，样式表可读、可维护；写得花哨，特异性战争、覆盖失败、选择器长到没人敢动。本篇讲现代选择器怎么用，以及什么时候应该退回到一个简单的 class。
+选择器决定“样式作用在谁身上”。这几年 CSS 新增了 `:is()`、`:where()`、`:has()` 等强大的选择器，很多过去必须靠 JS 才能实现的效果，现在一行 CSS 就能搞定。但选择器用不好，也会带来一串难查的问题：
 
-## 现代 CSS 新增的几个利器
+- 用了 `:is()` 之后，某条样式怎么也覆盖不掉；
+- `.item:nth-child(2)` 明明有第二个 `.item`，样式却没生效；
+- 手机上点一下按钮，hover 效果一直“粘”在上面；
+- 为了好看去掉了焦点框，键盘用户完全不知道自己在哪。
 
-过去几年 CSS 选择器增加了几个非常实用的功能：
+::: tip 读完这篇你会
+- 用 `:is()`、`:where()`、`:has()` 写出更短、更好覆盖的选择器
+- 理解浏览器从右往左匹配选择器的方式
+- 避开优先级、计数、触屏 hover 和焦点样式的常见坑
+:::
 
-| 选择器 | 作用 | 典型场景 |
-| --- | --- | --- |
-| `:is(A, B, C)` | 匹配列表中任意一个，特异性取最高 | 简化分组 |
-| `:where(A, B, C)` | 同 `:is`，但特异性为 0 | 提供可被轻松覆盖的默认样式 |
-| `:has(> .child)` | 选择"包含满足条件子元素"的父元素 | 父元素根据内容变样式 |
-| `[attr="x"]`、`[attr^="x"]` | 属性匹配 | 根据 data-* 或链接类型样式化 |
-| `:not(A)` | 反向匹配 | 排除某些元素 |
+## 1. 原理：浏览器从右往左匹配
 
-```css
-/* 旧写法：啰嗦 */
-.card h1, .card h2, .card h3 { color: var(--color-text); }
-
-/* 新写法：:is 收敛 */
-.card :is(h1, h2, h3) { color: var(--color-text); }
-
-/* :where 特异性为 0，方便被组件自定义覆盖 */
-:where(button, a.button) {
-  padding: 0.5em 1em;
-  border-radius: var(--radius);
-}
-.my-app button { padding: 0.75em 1.25em; } /* 能轻松覆盖上面 */
-
-/* :has 选择"有图标的链接" */
-a:has(> img) { display: inline-flex; gap: 0.4em; }
-```
-
-`:has()` 是近十年最有用的 CSS 功能之一——过去必须靠 JS 或改 DOM 结构才能实现的"父元素根据子元素状态变化"，现在纯 CSS 就能做。但要小心：复杂的 `:has()` 嵌套会让浏览器在 DOM 变化时做更多检查。
-
-## 特异性怎么算
-
-特异性决定"多条规则同时命中时谁赢"。记一个 (a, b, c) 三元组：
-
-| 来源 | 计入 | 例子 |
-| --- | --- | --- |
-| a | ID 数量 | `#nav` → (1,0,0) |
-| b | class、属性、伪类数量 | `.card.active` → (0,2,0) |
-| c | 元素、伪元素数量 | `div > p` → (0,0,2) |
+看到 `.nav .item a` 时，浏览器不是先找 `.nav` 再往里找，而是**先找所有 `a`**，再逐个往上检查：父级里有没有 `.item`？再往上有没有 `.nav`？
 
 ```text
-#nav .item         → (1, 1, 0)
-.card .title span  → (0, 2, 1)
-:hover             → (0, 1, 0)
-div                → (0, 0, 1)
+.nav  .item  a
+  ③     ②    ①   ← 匹配顺序：从最右边的“关键选择器”开始
 ```
 
-比较时从左到右，`#nav .item` 永远赢过任意数量的 class。这就是为什么用 ID 写样式很危险——以后想覆盖只能再叠 ID 或 `!important`，特异性雪球越滚越大。
+所以最右边的部分（关键选择器）最影响匹配成本。`.nav *` 意味着先拿到页面上**所有**元素再逐个检查。不过在实际项目里，选择器性能问题远没有优先级问题常见。记住两条就够：嵌套不超过 3 层，关键选择器尽量是一个类名。
 
-> `:where()` 的特异性永远是 (0,0,0)，这是它和 `:is()` 的唯一区别。提供"可被覆盖的默认样式"时优先用它。
+## 2. 几个好用的现代选择器
 
-## 何时用 class，何时用伪类
+| 选择器 | 作用 | 典型用途 |
+| --- | --- | --- |
+| `:is(A, B)` | 匹配任意一个，优先级取参数中**最高**的 | 简化冗长的分组 |
+| `:where(A, B)` | 同 `:is`，但优先级**永远为 0** | 写容易被覆盖的默认样式 |
+| `:has(...)` | 选择“包含某种子元素”的元素 | 父元素根据内容改变样式 |
+| `:not(A)` | 排除 | 除了最后一项都加分割线 |
+| `[attr^="x"]` | 属性以 x 开头 | 外部链接、文件类型图标 |
+| `:focus-visible` | 只在键盘聚焦时匹配 | 焦点样式 |
 
-不是所有匹配都该塞进选择器。判断标准：**这条规则是否依赖 DOM 结构？**
+```css
+/* :is 收敛重复的选择器 */
+.article :is(h2, h3, h4) { scroll-margin-top: 4rem; }
 
-| 情况 | 推荐 |
+/* :where 写默认样式，任何类名都能轻松覆盖 */
+:where(.prose) a { color: var(--color-primary); }
+
+/* :has 让父元素根据子元素变化：勾选了的选项卡片高亮 */
+.option:has(input:checked) { border-color: var(--color-primary); }
+
+/* 表单里有无效输入时，提交按钮变灰 */
+form:has(:invalid) .submit { opacity: 0.6; }
+
+/* 除最后一项外都加分割线 */
+.list > li:not(:last-child) { border-bottom: 1px solid var(--color-border); }
+```
+
+`:has()` 是近年最有用的 CSS 能力之一：过去“父元素根据子元素状态变化”只能靠 JS 切换类名，现在纯 CSS 就能做。主流浏览器在 2023 年底都已支持。
+
+## 3. 坑一：用了 `:is()`，样式覆盖不掉
+
+**现象**：主题里写了一条导航链接的样式，页面里想覆盖它，写了 `.nav-link--active { color: red }`，怎么都不生效。
+
+```css
+:is(#site-nav, .side-nav) a { color: var(--color-text); }
+```
+
+**原因**：`:is()` 的优先级取参数里**最高**的那个。这里有一个 `#site-nav`，整条规则的优先级就变成了 (1, 0, 1)，任何只靠类名的规则都赢不了它。
+
+**修复**：提供默认样式时用 `:where()`，它的优先级永远是 0：
+
+```css
+:where(#site-nav, .side-nav) a { color: var(--color-text); } /* 优先级 (0, 0, 1) */
+.nav-link--active { color: var(--color-primary); }           /* 轻松覆盖 */
+```
+
+**怎么避免再犯**：写给别人用的“默认样式”（组件库、主题、reset），一律用 `:where()` 包起来；不要在样式里用 ID 选择器。
+
+## 4. 坑二：`:nth-child(2)` 数错了
+
+**现象**：列表顶部有一个标题元素，`.item:nth-child(2)` 想选中第二个 `.item`，结果选中的是第一个。
+
+```html
+<ul>
+  <li class="list-title">分组 A</li>
+  <li class="item">第一项</li>  <!-- 被 .item:nth-child(2) 选中 -->
+  <li class="item">第二项</li>
+</ul>
+```
+
+**原因**：`:nth-child(2)` 数的是**所有兄弟元素**中的第 2 个，然后再检查它有没有 `.item` 类。它不是“`.item` 里的第 2 个”。`:nth-of-type` 也帮不上忙，它按**标签名**计数，这里大家都是 `li`。
+
+**修复**：现代浏览器支持 `of S` 语法，表示“在匹配 S 的元素里计数”：
+
+```css
+li:nth-child(2 of .item) { font-weight: 600; } /* 真正的第二个 .item */
+```
+
+需要兼容旧浏览器时，更稳妥的办法是调整结构（把标题移出列表），或者直接给目标元素加类名。
+
+## 5. 坑三：手机上 hover 效果“粘”住不走
+
+**现象**：卡片的 hover 效果是上浮加阴影。在手机上点一下卡片，它就一直保持上浮状态，直到点击页面其他地方。
+
+**原因**：触屏设备没有“鼠标悬停”，浏览器为了兼容，会在点击时触发 `:hover`，并且一直保持到下一次点击别处。
+
+**修复**：只在真正支持悬停的设备上启用 hover 效果：
+
+```css
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+```
+
+点击反馈可以用 `:active`，它在手指按下时生效、抬起后消失。
+
+## 6. 坑四：去掉了焦点框，键盘用户迷路了
+
+**现象**：设计觉得点击按钮时出现的蓝色外框不好看，于是全局加了 `*:focus { outline: none }`。之后用键盘 Tab 键浏览页面的用户，完全看不出焦点停在哪里。
+
+**原因**：焦点框是键盘用户的“鼠标指针”。直接去掉等于让他们闭着眼操作。
+
+**修复**：用 `:focus-visible` 代替 `:focus`。浏览器会判断：鼠标点击时一般不显示，键盘操作时显示。
+
+```css
+/* 去掉旧的统一样式，只在需要时显示清晰的焦点框 */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+```
+
+## 7. 身份用类名，状态用伪类
+
+| 要表达的东西 | 推荐写法 |
 | --- | --- |
-| 组件外观（卡片、按钮样式） | BEM class：`.button--primary` |
-| 状态（hover、focus、disabled） | 伪类：`:hover` `:focus-visible` `:disabled` |
-| 结构关系（第一个、最后一个、奇偶） | 伪类：`:first-child` `:nth-child` |
-| "有某属性的元素"（外部链接、带 data） | 属性选择器 `[rel="external"]` |
-| "包含某子元素的父元素" | `:has()` |
+| 这是什么组件 | 类名：`.button`、`.button--primary` |
+| 交互状态 | 伪类：`:hover`、`:focus-visible`、`:active`、`:disabled` |
+| 表单状态 | 伪类：`:checked`、`:invalid`、`:placeholder-shown` |
+| 结构位置 | 伪类：`:first-child`、`:last-child`、`:nth-child()` |
+| 包含关系 | `:has()` |
+
+能用伪类表达的状态，就不要用 JS 切类名。例如禁用按钮，用原生的 `disabled` 属性加 `:disabled` 选择器，既省代码，屏幕阅读器也能正确识别。
+
+另外，样式不要依赖 DOM 层级：
 
 ```css
-/* 用 class 表达组件身份 */
-.button { ... }
-.button--primary { ... }
-
-/* 用伪类表达状态，不要 .button.is-hover */
-.button:hover { ... }
-.button:focus-visible { outline: 2px solid var(--color-primary); }
-.button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* 结构性匹配用伪类 */
-.list > li:first-child { border-top: none; }
+.header > nav > ul > li > a { color: var(--color-text); } /* ❌ 多一层 div 就失效 */
+.nav-link { color: var(--color-text); }                   /* ✅ */
 ```
 
-关键原则：**身份用 class，状态用伪类**。把"鼠标悬停"写成 `.button.is-hover` 然后靠 JS 切换，纯属增加负担——除非你确实需要用 JS 触发类似 hover 的状态。
+## 排查思路
 
-## 选择器性能：大多数时候不必担心
+1. **想知道一个选择器到底选中了谁**：在控制台运行 `document.querySelectorAll('你的选择器')`，看返回的元素列表。
+2. **想看优先级**：在 Styles 面板把鼠标悬停在选择器上，Chrome 会显示它的优先级数值。
+3. **调试 hover、focus、active 样式**：在 Styles 面板点击 `:hov` 按钮，勾选对应状态，元素会被强制保持在这个状态，不用一直把鼠标放在上面。
+4. **测试焦点样式**：拔掉鼠标，只用 Tab、Shift+Tab、回车、空格走一遍主要流程。
 
-现代浏览器从右向左匹配选择器。`.nav .item .link` 会先找所有 `.link`，再过滤出在 `.item` 内、再过滤出在 `.nav` 内。所以**最右侧的关键选择器**最影响性能。
+## 检查清单
 
-```css
-/* 慢：* 作为关键选择器，遍历页面所有元素 */
-.nav * { ... }
+- [ ] 给别人用的默认样式用 `:where()`，样式里没有 ID 选择器
+- [ ] 选择器嵌套不超过 3 层，不依赖具体的 DOM 层级
+- [ ] 使用 `:nth-child()` 时确认了计数对象
+- [ ] hover 效果放在 `@media (hover: hover)` 里
+- [ ] 没有全局 `outline: none`，焦点样式用 `:focus-visible`
+- [ ] 能用伪类表达的状态不用 JS 切类名
 
-/* 慢：属性选择器作为关键选择器，在大页面上成本高 */
-[class*="icon-"] { ... }
+## 延伸阅读
 
-/* 快：单 class 关键选择器 */
-.nav-link { ... }
-```
-
-实际项目中，选择器性能问题远少于特异性问题。规则是：**别写超过 3 层嵌套的选择器，关键选择器尽量是单个 class**。如果选择器长到要数逗号和空格，就该抽成 class 了。
-
-## 避免依赖 DOM 结构
-
-```css
-/* 脆弱：换一层 DOM 就失效 */
-.header > nav > ul > li > a { color: var(--color-text); }
-
-/* 稳健：直接给元素命名 */
-.nav-link { color: var(--color-text); }
-```
-
-基于标签嵌套的选择器把样式和 DOM 结构绑死了。组件内部一重构，样式就崩。除非是结构性伪类（如 `:first-child`），否则优先用语义化的 class。
-
-## 务实的检查清单
-
-- 是否用 `:where()` 提供可覆盖的默认样式，用 `:is()` 简化冗长分组？
-- 用到 `:has()` 的地方，是否真的需要它，而不是改 class 更简单？
-- 特异性是否控制在 class 层级，避免用 ID 写样式？
-- 选择器嵌套是否不超过 3 层，关键选择器是否是单个 class？
-- 状态样式是否用伪类（`:hover` `:focus-visible`），而不是 JS 切 class？
-
-选择器的目标不是"写得越短/越长越好"，而是让读样式表的人能立刻看出"这条规则在匹配谁、为什么"。清晰优先于技巧。
+- [BEM 命名规范](/web/css/BEM规范)：优先级怎么计算
+- [CSS 架构与组织](/web/css/architecture)：用 `@layer` 管理覆盖关系
+- [可访问性实战](/web/frontend/accessibility)：键盘操作与焦点管理

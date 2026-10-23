@@ -1,93 +1,158 @@
 ---
 title: 前端与 SEO
-description: 从语义化 HTML、meta 标签到结构化数据，做搜索引擎和用户都能理解的内容。
+description: 从搜索引擎“抓取、渲染、索引”的过程讲起，修复单页应用每页标题都一样、分享卡片不对、hash 路由不被收录、不存在的页面返回 200、测试环境的 noindex 带到生产等常见 SEO 问题。
 ---
 
 # 前端与 SEO
 
-SEO（搜索引擎优化）不是上线后再补的"优化项"，而是从写 HTML 时就该考虑的内容架构。搜索引擎爬虫读的是 HTML，不是渲染后的视觉——一个对爬虫友好的页面，通常也对屏幕阅读器和慢网络用户友好。本篇讲前端能掌控的 SEO 要点：语义化、meta、SSR/SSG、结构化数据和性能。SPA 的 SEO 挑战会单独说明。
+SEO（搜索引擎优化）听起来像是运营的事，但很多致命问题出在前端：
 
-## 语义化 HTML 是 SEO 的地基
+- 用 Vue 做的官网，搜索结果里所有页面的标题都一样；
+- 文章链接分享到微信或其他社交平台，卡片上显示的永远是首页的标题和图片；
+- 地址是 `/#/article/12` 的形式，文章页一直不被收录；
+- 一次发布后，整站从搜索结果里消失了——原来是把测试环境的 `noindex` 带到了生产。
 
-爬虫通过 HTML 标签理解页面结构和内容权重。用语义标签明确告诉它"这是标题、这是导航、这是正文"：
+这篇先讲搜索引擎是怎么“读”网页的，再逐个解决这些问题。
 
-| 标签 | SEO 作用 |
-| --- | --- |
-| `<h1>` | 页面主标题，每页一个，权重最高 |
-| `<h2>`~`<h6>` | 内容层级，按顺序使用 |
-| `<main>` | 主内容区 |
-| `<nav>` | 导航 |
-| `<article>` | 独立完整的内容（文章、帖子） |
-| `<section>` | 内容分区 |
-| `<header>` / `<footer>` | 页头页脚 |
+::: tip 读完这篇你会
+- 理解抓取、渲染、索引的过程，知道为什么单页应用容易出问题
+- 为每个页面设置正确的标题、描述、规范链接和分享信息
+- 避开 hash 路由、软 404、环境配置串用等坑
+:::
 
-```html
-<!-- 差：全 div，爬虫看不出结构和权重 -->
-<div class="title">JavaScript 原型链</div>
-<div class="content">...</div>
+## 1. 原理：搜索引擎像一位图书管理员
 
-<!-- 好：语义标签，层级清晰 -->
-<article>
-  <h1>JavaScript 原型链</h1>
-  <section>
-    <h2>原型链如何工作</h2>
-    <p>...</p>
-  </section>
-</article>
+搜索引擎处理一个网页，大致分四步：
+
+```text
+抓取（下载 HTML）→ 渲染（执行 JS，得到完整内容）→ 索引（理解内容、存进目录）→ 排名（按搜索词推荐）
 ```
 
-> 标题层级要按顺序：`<h1>` 后直接接 `<h2>`，不要跳过 `<h3>` 直接用 `<h4>`。爬虫用标题层级构建内容大纲，跳跃会打乱理解。
+可以把它想成一位图书管理员：先把书收进来（抓取），翻开读一读（渲染），给它编目录卡片（索引），有人来问时再推荐（排名）。
 
-## meta 标签：页面的元信息
+问题出在“渲染”这一步。纯客户端渲染的单页应用（SPA），下载下来的 HTML 几乎是空的：
 
-`<head>` 里的 meta 标签告诉搜索引擎页面的基本信息：
+```html
+<body>
+  <div id="app"></div>
+  <script src="/assets/index.js"></script>
+</body>
+```
+
+内容要等 JS 执行完才出现。部分搜索引擎会执行 JS，但会排队延后、有资源限制；有些搜索引擎和大多数**社交平台的分享卡片抓取程序**不执行 JS，它们看到的就是这本“空白的书”。
+
+## 2. 让内容直接出现在 HTML 里
+
+| 渲染方式 | 初始 HTML | 适合 |
+| --- | --- | --- |
+| 客户端渲染（CSR） | 空壳，内容靠 JS 生成 | 登录后才能用的后台系统，不需要 SEO |
+| 服务端渲染（SSR） | 服务器每次请求时生成完整 HTML | 内容经常变化：电商、资讯 |
+| 静态生成（SSG） | 构建时生成完整 HTML 文件 | 内容不常变：博客、文档、官网 |
+
+你正在看的这个博客就是用 VitePress 静态生成的：每篇文章在构建时就变成了一个完整的 HTML 文件，搜索引擎下载下来就能读到全文。Vue 项目需要 SSR 时，可以使用 Nuxt，详见 [SSR 与 Nuxt 入门](/web/vue/ssr)。
+
+## 3. 每个页面都要有自己的“名片”
 
 ```html
 <head>
-  <title>JavaScript 原型链详解 - 技术博客</title>
-  <meta name="description" content="从对象的原型链理解 class 语法，包含代码示例和调试技巧。" />
-  <link rel="canonical" href="https://example.com/js/prototype" />
-  <meta name="robots" content="index, follow" />
+  <title>JavaScript 原型链详解 - 野塘漫水</title>
+  <meta name="description" content="用“自己不会就问师傅”的方式理解原型链，并避开常见坑。" />
+  <link rel="canonical" href="https://example.com/web/JavaScript/prototype" />
+
+  <!-- 分享卡片 -->
+  <meta property="og:title" content="JavaScript 原型链详解" />
+  <meta property="og:description" content="理解原型链，看懂 class 背后发生了什么。" />
+  <meta property="og:image" content="https://example.com/og/prototype.png" />
 </head>
 ```
 
 | 标签 | 作用 |
 | --- | --- |
-| `<title>` | 浏览器标签标题，搜索结果的主链接文字（极重要） |
-| `<meta description>` | 搜索结果摘要（不直接影响排名，影响点击率） |
-| `<link canonical>` | 标准化 URL，避免重复内容被当作不同页面 |
-| `<meta robots>` | 控制是否索引、是否跟随链接 |
-| `<meta og:*>` | 社交分享时的卡片信息 |
+| `<title>` | 搜索结果里的标题，最重要的一项，每页唯一 |
+| `description` | 搜索结果里的摘要，不直接影响排名，但影响用户是否点击 |
+| `canonical` | 告诉搜索引擎“这个页面的标准地址是哪个” |
+| `robots` | 是否允许收录、是否跟随页面上的链接 |
+| `og:*` | 社交平台分享卡片的标题、描述和图片 |
 
-`title` 要独特、含关键词、长度合适（50-60 字符，太长会被截断）。`description` 是给用户看的"广告语"，写清楚这页讲什么，别堆关键词。
+### 坑一：所有页面的标题都一样，分享卡片也一样
 
-## SSR / SSG：让爬虫看到完整内容
+**现象**：搜索结果里网站的十几个页面标题全是“XX 官网”；把文章链接分享出去，卡片显示的是首页的介绍。
 
-这是 SPA（单页应用）最大的 SEO 挑战。纯客户端渲染的 SPA 初始 HTML 是空壳，内容靠 JS 执行后填充。爬虫如果执行 JS 不完整或延迟，就看不到内容：
+**原因**：单页应用只有一个 `index.html`，`<title>` 和 meta 写死在里面。切换路由时没有更新它们；就算用 JS 更新了，不执行 JS 的分享抓取程序也看不到。
 
-| 方案 | 初始 HTML | SEO 友好度 |
-| --- | --- | --- |
-| CSR（纯 SPA） | 空壳，靠 JS 填充 | 差，依赖爬虫执行 JS |
-| SSR（服务端渲染） | 服务端生成完整 HTML | 好 |
-| SSG（静态生成） | 构建时生成完整 HTML | 好，且最快 |
-| ISR（增量静态再生） | 静态 + 按需更新 | 好 |
+**修复**：
 
-| 场景 | 推荐 |
-| --- | --- |
-| 博客、文档、营销页（内容稳定） | SSG |
-| 电商、社交（数据动态） | SSR |
-| 后台管理系统（无需 SEO） | CSR 即可 |
+- 至少在路由切换时更新标题和描述：
 
-```text
-内容型网站（需要被搜索到）→ SSR 或 SSG
-应用型网站（登录后才用）→ CSR 无所谓
+```js
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} - 野塘漫水` : '野塘漫水'
+})
 ```
 
-> 谷歌爬虫能执行 JS，但有延迟和成本。百度等爬虫对 JS 渲染支持更弱。面向国内用户的内容站，SSR/SSG 几乎是必需。
+- 更完善的做法是使用 `@unhead/vue` 这类工具管理每个页面的 head 信息；
+- 需要正确的分享卡片、需要被搜索收录的页面，使用 SSR 或 SSG，让 meta 信息直接出现在服务器返回的 HTML 里。
 
-## 结构化数据：让爬虫"理解"内容
+## 4. 坑二：hash 路由的页面不被收录
 
-Schema.org 结构化数据用 JSON-LD 告诉爬虫"这是一个文章、作者是谁、发布日期是多少"。爬虫理解后可能在搜索结果里展示富摘要（rich snippet）：
+**现象**：网站的地址都是 `https://example.com/#/article/12` 这种形式，搜索引擎只收录了首页。
+
+**原因**：URL 里 `#` 后面的部分叫片段（fragment），它**不会发送给服务器**，搜索引擎通常也把带不同片段的地址视为同一个页面。对它们来说，整个网站只有一个页面。
+
+**修复**：改用 history 模式的路由（`createWebHistory()`），地址变成 `/article/12`。同时必须配置服务器：所有找不到对应文件的路径都返回 `index.html`，否则用户刷新页面时会得到 404。以 Nginx 为例：
+
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
+## 5. 坑三：不存在的页面返回了 200
+
+**现象**：搜索结果里出现了一堆“页面不存在”的页面。
+
+**原因**：单页应用对任何路径都返回 `index.html`，HTTP 状态码是 200，前端路由再显示“404 页面”。在搜索引擎看来，这是一个**正常的页面**，内容恰好是“页面不存在”，于是把它收录了。这叫**软 404**。
+
+**修复**：
+
+- SSR 项目在找不到数据时，让服务器返回真正的 404 状态码；
+- 纯前端项目至少给 404 页面加上 `<meta name="robots" content="noindex">`，告诉搜索引擎不要收录。
+
+## 6. 坑四：测试环境的配置被带到了生产
+
+**现象**：一次发布后，网站在搜索结果中的流量断崖式下跌。排查发现，生产环境的 `robots.txt` 里写着 `Disallow: /`。
+
+或者反过来：测试环境的地址出现在了搜索结果里，里面还有未发布的内容和测试数据。
+
+**原因**：测试环境为了不被收录，配置了禁止抓取；但这个配置写死在代码里，随着发布带到了生产。
+
+**修复与预防**：
+
+- `robots.txt` 和 `noindex` 按环境区分生成，不要写死在通用代码里；
+- 测试环境除了禁止收录，最好还加上访问限制（登录、IP 白名单），`robots.txt` 只是“君子协定”；
+- 发布后自动检查一次生产环境的 `robots.txt` 和首页的 robots meta。
+
+```text
+# 生产环境的 robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Sitemap: https://example.com/sitemap.xml
+```
+
+## 7. 坑五：一个页面有好几个地址
+
+**现象**：同一篇文章被收录了好几次，地址分别带着不同的参数：`?from=weixin`、`?utm_source=newsletter`、末尾带不带斜杠。
+
+**原因**：对搜索引擎来说，参数不同就是不同的 URL。重复内容会分散页面的权重。
+
+**修复**：每个页面都声明 `canonical`，指向不带追踪参数的标准地址；站内链接统一使用这个标准地址（统一是否带末尾斜杠）。
+
+## 8. 语义化 HTML 和结构化数据
+
+搜索引擎通过标签理解内容的结构和重点：每页一个 `<h1>`，标题按层级使用，正文放在 `<main>` 和 `<article>` 里。这些做法同时也让读屏软件更好用，见 [可访问性实战](/web/frontend/accessibility)。
+
+结构化数据用 JSON-LD 告诉搜索引擎“这是一篇文章、作者是谁、什么时候发布的”，有机会在搜索结果中显示更丰富的信息：
 
 ```html
 <script type="application/ld+json">
@@ -95,82 +160,37 @@ Schema.org 结构化数据用 JSON-LD 告诉爬虫"这是一个文章、作者�
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   "headline": "JavaScript 原型链详解",
-  "author": { "@type": "Person", "name": "作者" },
   "datePublished": "2026-08-09",
-  "image": "https://example.com/img/prototype.png",
-  "mainEntityOfPage": "https://example.com/js/prototype"
+  "author": { "@type": "Person", "name": "作者名" }
 }
 </script>
 ```
 
-常见的结构化数据类型：`Article`、`Product`、`Recipe`、`FAQPage`、`BreadcrumbList`。用 Google 的结构化数据测试工具验证格式是否正确。
+## 9. sitemap 和性能
 
-## sitemap 和 robots.txt
+- **sitemap.xml**：列出网站所有重要页面的地址和更新时间，帮助搜索引擎发现新页面。静态站点生成器大多可以自动生成。
+- **性能**：页面体验（LCP、INP、CLS）也是排名的参考因素之一，而且慢页面的跳出率更高，见 [性能与加载体验](/web/frontend/performance)。
 
-告诉爬虫"有哪些页面可以抓、哪些不要抓"：
+## 排查思路
 
-```text
-# robots.txt（放在站点根目录）
-User-agent: *
-Allow: /
-Disallow: /admin/
-Sitemap: https://example.com/sitemap.xml
-```
+1. **看搜索引擎拿到的 HTML**：右键“查看网页源代码”（不是 Elements 面板，Elements 显示的是 JS 执行后的结果）。源代码里没有正文和正确的 meta，就说明依赖 JS 渲染。
+2. **禁用 JS 再看一遍**：DevTools → Ctrl/Cmd + Shift + P → 输入 Disable JavaScript，刷新页面，看到的内容接近不执行 JS 的抓取程序看到的。
+3. **用搜索引擎的站长工具**：例如 Google Search Console 的“网址检查”能显示它实际抓取和渲染的结果，以及页面是否被收录、为什么没被收录。国内搜索引擎也有对应的站长平台。
+4. **用 `site:你的域名` 搜索**，看收录了哪些页面，有没有不该出现的（测试环境、404 页面、带参数的重复地址）。
+5. **每次发布后检查** `robots.txt`、首页的 robots meta 和 canonical。
 
-```xml
-<!-- sitemap.xml：列出所有重要页面 -->
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://example.com/js/prototype</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-</urlset>
-```
+## 检查清单
 
-> 动态站点自动生成 sitemap，确保新页面能被发现。但 sitemap 只是"提示"，最终是否索引由爬虫决定——内容质量才是根本。
+- [ ] 需要被搜索到的页面使用 SSR 或 SSG
+- [ ] 每个页面有唯一的 `<title>`、`description` 和 `canonical`
+- [ ] 需要分享的页面有正确的 `og:*` 信息，且出现在服务器返回的 HTML 里
+- [ ] 使用 history 路由，服务器配置了回退到 `index.html`
+- [ ] 404 页面返回 404 状态码，或至少设置了 `noindex`
+- [ ] `robots.txt` 和 `noindex` 按环境生成，测试环境另有访问限制
+- [ ] 提供 sitemap，站内链接使用标准地址
 
-## 性能也是 SEO 因素
+## 延伸阅读
 
-谷歌把 Core Web Vitals（核心网页指标）纳入排名因素：
-
-| 指标 | 含义 | 目标 |
-| --- | --- | --- |
-| LCP（最大内容绘制） | 主内容加载完成时间 | < 2.5s |
-| INP（交互到下一次绘制） | 交互响应速度 | < 200ms |
-| CLS（累积布局偏移） | 视觉稳定性 | < 0.1 |
-
-```text
-LCP 慢 → 图片太大、关键 CSS 阻塞 → 见 CSS 性能优化
-CLS 高 → 图片没设尺寸、字体加载跳动 → 给图片预留宽高
-INP 慢 → 主线程被长任务阻塞 → 拆分长任务
-```
-
-详见 [性能与加载体验](./performance.md) 和 [CSS 性能优化](../css/performance.md)。性能好的页面不仅排名好，用户留存也高。
-
-## URL 结构和链接
-
-清晰的 URL 帮助爬虫和用户理解页面关系：
-
-| 原则 | 例子 |
-| --- | --- |
-| 短且有语义 | `/js/prototype` 而非 `/article?id=123` |
-| 层级反映结构 | `/blog/category/post-slug` |
-| 用连字符分词 | `prototype-chain` 而非 `prototype_chain` |
-| 小写 | 避免大小写敏感问题 |
-
-内部链接让爬虫发现页面，也让权重在站内流动。重要的页面应该从首页或导航能到达，而不是埋在五层点击之后。
-
-## 务实的检查清单
-
-- 是否用了语义化 HTML，每页一个 `<h1>`，标题层级不跳跃？
-- `<title>` 和 `description` 是否每页独特、含关键词？
-- 内容型页面是否用了 SSR/SSG，而不是纯 CSR？
-- 是否加了 Schema.org 结构化数据（JSON-LD）？
-- 是否提供了 sitemap.xml 和 robots.txt？
-- Core Web Vitals 是否达标（LCP/INP/CLS）？
-- URL 是否语义化、小写、用连字符？
-
-SEO 不是 trick 和 hack，而是"让内容被正确理解"。做对语义化 HTML、保证可抓取、提供完整内容，剩下的交给时间和内容质量。前端的职责是搭好让内容被发现的舞台。
+- [SSR 与 Nuxt 入门](/web/vue/ssr)：服务端渲染怎么做
+- [路由与页面状态](/web/vue/router)：history 模式与路由配置
+- [性能与加载体验](/web/frontend/performance)：Core Web Vitals
