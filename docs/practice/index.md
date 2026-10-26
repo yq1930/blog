@@ -27,6 +27,7 @@ description: 从笔记应用、桌面扩展，以及 PHP/Yaf、Vue 2、移动 H5
 | 发布新版本后，已打开的页面切换路由报错 | [懒加载与发布恢复](/practice/notes-release-recovery) |
 | Yaf 控制器和公共库越来越大 | [Yaf 多应用架构](/practice/yaf-multi-app-architecture) |
 | PHP 爆出严重漏洞，旧项目又不能直接升级 | [PHP 漏洞处置与升级](/practice/php-critical-vulnerability-response) |
+| PHP 升级后频繁报类型错误，部分结果还悄悄变了 | [PHP 8 编码规范与兼容检查](/practice/php8-coding-guidelines) |
 | SQL 在数据库工具里有数据，报表页面却是空的 | [SQL 批处理结果契约](/practice/sql-batch-result-contract) |
 | 写操作偶尔重复，或者状态不一致 | [事务、幂等与补偿](/practice/transactional-business-workflow) |
 | Vue 2 路由、全局方法和 UI 库混在一起 | [Vue 2 多端工程治理](/practice/vue2-multi-terminal-engineering) |
@@ -68,6 +69,7 @@ description: 从笔记应用、桌面扩展，以及 PHP/Yaf、Vue 2、移动 H5
 | 文章 | 解决的问题 |
 | --- | --- |
 | [PHP 严重漏洞处置与升级](/practice/php-critical-vulnerability-response) | 严重漏洞公布后，Windows/Yaf 旧项目怎样盘点、临时缓解、补丁回补和迁移 |
+| [PHP 8 编码规范与兼容检查](/practice/php8-coding-guidelines) | 数组与对象、数值运算、静默变化和 PHP 7.3 回滚期的兼容规则 |
 | [Yaf 多应用项目整理](/practice/yaf-multi-app-architecture) | 多个入口、多个应用目录、共享模型和公共库各自负责什么 |
 | [SQL 批处理与结果集](/practice/sql-batch-result-contract) | 一段 SQL 返回多个结果集时，前后端怎样约定“哪个才是数据” |
 | [事务、幂等与补偿](/practice/transactional-business-workflow) | 订单、库存、支付、预约等不能重复执行的写操作 |
@@ -88,7 +90,11 @@ description: 从笔记应用、桌面扩展，以及 PHP/Yaf、Vue 2、移动 H5
 
 [私有项目怎么写成公开技术文章](/practice/public-writing-from-private-code)：怎样挑选代码、重写示例、合成数据、扫描构建产物，并区分“项目现状”和“推荐方案”。这个系列的每一篇都按这个方法写成。
 
-## 近期更新：2026-10-23
+## 近期更新：2026-10-26
+
+新增 [PHP 8 编码规范与兼容检查](/practice/php8-coding-guidelines)，将 PHP 7.3 迁移到 PHP 8.3 后的常见问题整理为类型、运算、函数契约和回滚验证规则，并区分语言行为与项目兼容层约定。
+
+## 2026-10-23 更新
 
 本轮从八个项目近 30 天的本地提交中取材，并沿着直接相关的修复追踪上下文。已提交的源码只能证明“实现了”，不等于已经部署上线或通过了本次业务实测；还在进行中、没有提交的改动，没有写成稳定能力。
 
