@@ -67,7 +67,7 @@
         <div class="shelf-grid">
           <a class="shelf-card shelf-card--practice" href="/practice/">
             <span class="shelf-card__mark">FIELD NOTES</span>
-            <span class="shelf-card__meta">21 篇 · 笔记应用与多端实践</span>
+            <span class="shelf-card__meta">22 篇 · 笔记应用与多端实践</span>
             <h3>真实工程实践</h3>
             <p>从笔记应用到多端业务系统与桌面扩展，整理编辑保存、布局时序、打印、SQL、宿主兼容与发布恢复的开发经验。</p>
             <span class="shelf-card__link">进入实践系列 <i aria-hidden="true">→</i></span>
@@ -126,9 +126,9 @@
           <p>每篇文章都从一个真实问题出发：先讲现象和原理，再给出踩坑记录、排查思路和检查清单。</p>
         </div>
         <div class="recent-list">
-          <a href="/practice/h5-layout-readiness">
-            <span>近期修复</span>
-            <strong>接口已经成功，为什么页面还滑不动、海报仍然缺图？</strong>
+          <a href="/practice/php8-coding-guidelines">
+            <span>升级规范</span>
+            <strong>升级 PHP 8 后，怎样修正类型错误并发现结果变化？</strong>
             <i aria-hidden="true">↗</i>
           </a>
           <a href="/practice/php-critical-vulnerability-response">

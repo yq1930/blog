@@ -60,6 +60,7 @@ export default defineConfig({
           items: [
             { text: 'Yaf 多应用整理', link: '/practice/yaf-multi-app-architecture' },
             { text: 'PHP 严重漏洞处置与升级', link: '/practice/php-critical-vulnerability-response' },
+            { text: 'PHP 8 编码规范与兼容检查', link: '/practice/php8-coding-guidelines' },
             { text: 'SQL 批处理与结果集', link: '/practice/sql-batch-result-contract' },
             { text: '事务、幂等与补偿', link: '/practice/transactional-business-workflow' }
           ]
@@ -188,6 +189,7 @@ export default defineConfig({
           items: [
             { text: '后端服务如何组织', link: '/backend/overview' },
             { text: '如何学习 PHP：从 0 到 1 做一个项目', link: '/backend/php-from-zero' },
+            { text: 'PHP 8 编码规范与兼容检查', link: '/practice/php8-coding-guidelines' },
             { text: 'REST API 设计', link: '/backend/restful' },
             { text: 'API 版本管理', link: '/backend/api-versioning' },
             { text: '认证、授权与会话', link: '/backend/authentication' },
