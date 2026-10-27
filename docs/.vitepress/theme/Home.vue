@@ -111,9 +111,9 @@
           </a>
           <a class="shelf-card shelf-card--ai" href="/ai/">
             <span class="shelf-card__mark">AI</span>
-            <span class="shelf-card__meta">12 篇 · 模型与应用</span>
+            <span class="shelf-card__meta">15 篇 · 模型与应用</span>
             <h3>AI 与 Agent</h3>
-            <p>从大语言模型的生成本质出发，理解 Prompt、工具调用与检索增强，把模型能力落到可工程化的应用里。</p>
+            <p>从模型与工具调用走到本地知识助手、草稿可靠保存和周报工作流，理解检索依据、执行边界与规则降级。</p>
             <span class="shelf-card__link">阅读 AI 笔记 <i aria-hidden="true">→</i></span>
           </a>
         </div>
@@ -126,9 +126,9 @@
           <p>每篇文章都从一个真实问题出发：先讲现象和原理，再给出踩坑记录、排查思路和检查清单。</p>
         </div>
         <div class="recent-list">
-          <a href="/practice/php8-coding-guidelines">
-            <span>升级规范</span>
-            <strong>升级 PHP 8 后，怎样修正类型错误并发现结果变化？</strong>
+          <a href="/ai/local-knowledge-agent">
+            <span>Agent 实战</span>
+            <strong>知识助手生成的草稿，怎样核对它真正读过的依据？</strong>
             <i aria-hidden="true">↗</i>
           </a>
           <a href="/practice/php-critical-vulnerability-response">
