@@ -255,6 +255,14 @@ export default defineConfig({
           ]
         },
         {
+          text: '项目实战',
+          items: [
+            { text: '本地知识 Agent 与来源核对', link: '/ai/local-knowledge-agent' },
+            { text: 'AI 草稿保存与版本校验', link: '/ai/agent-draft-adoption' },
+            { text: '周报 Agent 与规则降级', link: '/ai/weekly-report-workflow' }
+          ]
+        },
+        {
           text: '工程与产品',
           items: [
             { text: 'ZCode 与 DeepSeek Harness', link: '/ai/zcode-vs-deepseek-harness' },
