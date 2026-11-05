@@ -37,6 +37,8 @@ description: AI 栏目导读：从 Token、上下文、RAG 与 Agent 基础，�
 4. [AI Agent 开发实战：参考 DeepSeek Harness](/ai/agent-development)——从一个最小工具开始，做出能检索笔记、预览并可靠保存的 Agent。
 5. [LLM 评测与 Guardrails](/ai/evaluation-guardrails) 和 [LLM 应用安全](/ai/security)——让它上线后依然可控。
 
+想继续阅读完整运行时的实现，可以看 [Dim 源码分析与 Agent 运行时设计](/ai/dim-agent-runtime)，沿着事件记录、工具执行、会话分支和恢复机制理解它们怎样配合。
+
 ## 项目实战
 
 这三篇来自本地知识助手和周报草稿工具，按“读取依据 → 人工核对 → 交付结果”展开。文章说明当前实现的能力和边界，使用通用结构与虚构示例。
@@ -65,6 +67,7 @@ description: AI 栏目导读：从 Token、上下文、RAG 与 Agent 基础，�
 | 用 AI 写代码，总觉得不太可靠 | [AI 辅助编码工作流](/ai/ai-coding-workflow) |
 | 用户不信任或不会用 AI 生成的结果 | [AI 产品设计边界](/ai/product-design) |
 | 想了解成熟的 Agent 工具在工程上是怎么设计的 | [ZCode 与 DeepSeek Harness](/ai/zcode-vs-deepseek-harness) |
+| Agent 需要并行、取消、重载和恢复，不知道状态该放在哪里 | [Dim 与 Agent 运行时设计](/ai/dim-agent-runtime) |
 
 ## 全部文章
 
@@ -91,6 +94,7 @@ description: AI 栏目导读：从 Token、上下文、RAG 与 Agent 基础，�
 **工程与产品**
 
 - [ZCode 与 DeepSeek Harness](/ai/zcode-vs-deepseek-harness)：工作台与运行时的源码对比
+- [Dim 源码分析与 Agent 运行时设计](/ai/dim-agent-runtime)：Timeline、会话分支、恢复与跨语言插件
 - [AI 辅助编码工作流](/ai/ai-coding-workflow)：上下文、验证与提交边界
 - [LLM 应用安全](/ai/security)：不可信输入、工具权限与数据范围
 - [AI 产品设计边界](/ai/product-design)：让用户能理解、检查和采纳结果
