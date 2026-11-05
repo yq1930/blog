@@ -266,6 +266,7 @@ export default defineConfig({
           text: '工程与产品',
           items: [
             { text: 'ZCode 与 DeepSeek Harness', link: '/ai/zcode-vs-deepseek-harness' },
+            { text: 'Dim 与 Agent 运行时设计', link: '/ai/dim-agent-runtime' },
             { text: 'AI 辅助编码工作流', link: '/ai/ai-coding-workflow' },
             { text: 'LLM 应用安全', link: '/ai/security' },
             { text: 'AI 产品设计边界', link: '/ai/product-design' }
